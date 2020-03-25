@@ -4,18 +4,24 @@
     <meta charset="UTF-8">
     <title>Desk.js example</title>
 </head>
-<body>
-    <!-- The element that the editor will be rendered into -->
-    <div id="desk-editor">
+<link rel='stylesheet' href="example.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+<link href="https://stackpath.bootstrapcdn.com/bootswatch/4.4.1/solar/bootstrap.min.css" rel="stylesheet" integrity="sha384-Ya0fS7U2c07GI3XufLEwSQlqhpN0ri7w/ujyveyqoxTJ2rFHJcT6SUhwhL7GM4h9" crossorigin="anonymous">
 
+<body>
+    <div class="container container-fluid">
+        <br>
+        <div class="row">
+            <div class="col-md-10 mx-auto">
+                <!-- The element that the editor will be rendered into -->
+                <div id="desk-editor"></div>
+            </div>
+        </div>
     </div>
-    <p>
-        Hello
-    </p>
 </body>
 <script src="../dist/desk.js"></script>
 <script>
-    console.log(Desk);
     let d = new Desk({
         holder: "desk-editor"
     });

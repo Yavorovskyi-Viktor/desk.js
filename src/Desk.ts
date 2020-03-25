@@ -5,16 +5,16 @@ import Page from './Page';
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
-    height: "85vh",
-    width: "66vh",
+    height: "1056px",
+    width: "815px",
     pages: [],
     onPage: 1,
     onChange: (() => {}),
     margins: {
-        "left": "96px",
-        "right": "96px",
-        "top": "96px",
-        "bottom": "96px"
+        "left": "15px",
+        "right": "15px",
+        "top": "15px",
+        "bottom": "15px"
     }
 };
 

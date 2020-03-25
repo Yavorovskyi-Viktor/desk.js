@@ -50,7 +50,7 @@ class Page {
         // Assign a margin to each direction
         console.log("Have config", this.config);
         for (const dir of Object.keys(this.config.margins)){
-            styleString += `margin-${dir}: ${this.config.margins[dir]}`;
+            styleString += `padding-${dir}: ${this.config.margins[dir]};`;
         }
         return styleString;
     }
@@ -92,7 +92,9 @@ class Page {
             this.contentWrapper = Util.createElement('div', {
                 "id": this.wrapperID,
                 "contenteditable": "true",
-                "class": wrapperClass
+                "class": wrapperClass,
+                // Disable the default content editable outline
+                "style": "outline: 0px solid transparent;"
             });
             // Bind the event listener to this instance
             const onInput = this.onInput.bind(this);
