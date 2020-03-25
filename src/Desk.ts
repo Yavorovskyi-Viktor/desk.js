@@ -3,15 +3,36 @@ import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
 
+const defaultConfig: DeskConfig = {
+    holder: "desk-editor",
+    height: "85vh",
+    width: "66vh",
+    pages: [],
+    onPage: 1,
+    onChange: (() => {}),
+    margins: {
+        "left": "96px",
+        "right": "96px",
+        "top": "96px",
+        "bottom": "96px"
+    }
+};
+
 export default class Desk{
     constructor(config: DeskConfig){
-        // Set configuration defaults. The default values for these are detailed in DeskConfig.ts
-        config.holder = config.holder || "desk-editor";
-        config.height = config.height || "85vh";
-        config.width = config.width || "66vh";
-        config.pages = config.pages || [];
-        config.onPage = config.onPage || 1;
-        config.onChange = config.onChange || (() => {});
+        if (config == undefined){
+            config = defaultConfig
+        }
+        else{
+            // Set configuration defaults. The default values for these are detailed in DeskConfig.ts
+            config.holder = config.holder || defaultConfig.holder;
+            config.height = config.height || defaultConfig.height;
+            config.width = config.width || defaultConfig.width;
+            config.pages = config.pages || defaultConfig.pages;
+            config.onPage = config.onPage || defaultConfig.onPage;
+            config.onChange = config.onChange || defaultConfig.onChange;
+            config.margins = config.margins || defaultConfig.margins;
+        }
         this.config = config;
         // Make sure that the holder element exists on the page
         this.editorHolder = document.getElementById(this.config.holder);
@@ -29,6 +50,15 @@ export default class Desk{
         // If there are no current pages, create the first page
         if (this.pages.length == 0){
             this.newPage();
+        }
+
+        // Render the editor
+        this.render();
+    }
+
+    private render(){
+        for (const page of this.pages){
+            this.editorHolder.appendChild(page.render());
         }
     }
 

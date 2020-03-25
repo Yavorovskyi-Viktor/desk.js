@@ -5,7 +5,7 @@
  */
 function createElement(tag: string, attrs: Object): HTMLElement{
     const elem = document.createElement(tag);
-    for (const attr in Object.keys(attrs)){
+    for (const attr of Object.keys(attrs)){
         elem.setAttribute(attr, attrs[attr]);
     }
     return elem;

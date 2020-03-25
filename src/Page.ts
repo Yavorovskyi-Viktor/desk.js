@@ -48,6 +48,7 @@ class Page {
         // set the height and width that were passed in from the configuration
         let styleString = `height: ${this.config.height}; width: ${this.config.width};`;
         // Assign a margin to each direction
+        console.log("Have config", this.config);
         for (const dir of Object.keys(this.config.margins)){
             styleString += `margin-${dir}: ${this.config.margins[dir]}`;
         }
