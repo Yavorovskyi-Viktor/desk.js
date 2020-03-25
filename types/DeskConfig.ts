@@ -14,6 +14,9 @@ interface DeskConfig{
     // The data to load the editor with. An ordered list of pages
     pages?: PageData[];
 
+    // The page that the user is currently on. Defaults to 1
+    onPage?: number;
+
     // Called whenever a block is modified, created, or destroyed in the document
     onChange?(e: Event): void;
 }

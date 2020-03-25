@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "author": "Will Beddow",
   "dependencies": {
-    
+    "uuid": "^7.0.2"
   }
 }
