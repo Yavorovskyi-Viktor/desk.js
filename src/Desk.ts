@@ -3,7 +3,7 @@ import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
 
-class Desk{
+export default class Desk{
     constructor(config: DeskConfig){
         // Set configuration defaults. The default values for these are detailed in DeskConfig.ts
         config.holder = config.holder || "desk-editor";
@@ -13,16 +13,17 @@ class Desk{
         config.onPage = config.onPage || 1;
         config.onChange = config.onChange || (() => {});
         this.config = config;
-
         // Make sure that the holder element exists on the page
         this.editorHolder = document.getElementById(this.config.holder);
         if (this.editorHolder == null){
             console.error(`Couldn't find holder: ${config.holder}`)
         }
 
+        this.pages = [];
+
         // Instantiate the provided pages
         for (const page of config.pages){
-            this.pages.push(new Page(page));
+            this.pages.push(new Page(this.config, page));
         }
 
         // If there are no current pages, create the first page
@@ -32,7 +33,7 @@ class Desk{
     }
 
     public newPage(){
-        this.pages.push(new Page());
+        this.pages.push(new Page(this.config));
     }
 
     /**
@@ -56,5 +57,3 @@ class Desk{
     private config: DeskConfig;
 
 }
-
-export default Desk;

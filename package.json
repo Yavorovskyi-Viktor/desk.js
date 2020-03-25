@@ -2,7 +2,27 @@
   "name": "desk.js",
   "version": "1.0.0",
   "author": "Will Beddow",
+  "scripts": {
+    "build": "babel --out-file dist/desk.js src/Desk.ts"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
+    "@babel/preset-typescript": "^7.9.0",
+    "babel-loader": "^8.1.0",
+    "babel-plugin-add-module-exports": "^1.0.2",
+    "terser-webpack-plugin": "^2.3.5",
+    "ts-loader": "^6.2.2",
+    "typescript": "^3.8.3",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
+  },
   "dependencies": {
+    "@babel/plugin-transform-runtime": "^7.9.0",
+    "@babel/polyfill": "^7.8.7",
+    "@babel/register": "^7.9.0",
+    "babel-plugin-class-display-name": "^2.1.0",
     "uuid": "^7.0.2"
   }
 }

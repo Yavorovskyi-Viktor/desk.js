@@ -1,12 +1,21 @@
 // Internal imports
 import BlockData, {BlockType} from "../types/BlockData";
+import DeskConfig from "../types/DeskConfig";
+
 // External imports
 import { v4 } from 'uuid';
 
-// The class name for editor blocks
+// A blocks class in the DOM
+const blockClass = "desk-block";
+
+// The default height of a line in Desk
+const lineHeight = '20px';
+// The blank element that will be used to represent a blank line
+const whitespace = `<div class="desk-line desk-blank" style="height: ${lineHeight}"></div>`;
 
 class Block {
-    constructor(data?: BlockData){
+    constructor(config: DeskConfig, data?: BlockData){
+        this.config = config;
         // Generate a unique ID for the block if not specified
         this.uid = data.uid || v4();
         // The default block type will be a paragraph
@@ -36,7 +45,7 @@ class Block {
         let blockElement;
         switch (this.type){
             case BlockType.Paragraph:
-                blockElement = `<p contenteditable="true">${this.content}</p>`;
+                blockElement = `<p>${this.content}</p>`;
                 break;
             case BlockType.Heading:
                 // If the block data defines an attribute 'level', use that as the leader of the header. E.g.
@@ -49,13 +58,13 @@ class Block {
                     // Default header is h2
                     level = 2;
                 }
-                blockElement = `<h${level} contenteditable="true">${this.content}</h${level}>`;
+                blockElement = `<h${level}>${this.content}</h${level}>`;
                 break;
             case BlockType.Whitespace:
-                blockElement=`<br/>`;
+                blockElement = whitespace;
                 break;
         }
-        return `<div id="${this.domID}">${blockElement}</div>`;
+        return `<div id="${this.domID}" class="${blockClass}">${blockElement}</div>`;
     }
 
     /**
@@ -65,6 +74,7 @@ class Block {
         return `block-${this.uid}`;
     }
 
+    private config: DeskConfig;
     private content: string;
     private data: object;
     public uid: string;
