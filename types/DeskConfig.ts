@@ -1,5 +1,6 @@
 // Internal imports
 import PageData from "./PageData";
+import {Shortcut} from "./KeyboardShortcut";
 
 type Margin = "top" | "bottom" | "left" | "right"
 
@@ -28,6 +29,8 @@ interface DeskConfig{
 
     // Called whenever a block is modified, created, or destroyed in the document
     onChange?(e: Event): void;
+
+    shortcuts: Shortcut[]
 }
 
 export default DeskConfig;

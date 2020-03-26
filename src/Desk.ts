@@ -2,6 +2,7 @@
 import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
+import  { defaultShortcuts } from "./Engine";
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -16,7 +17,8 @@ const defaultConfig: DeskConfig = {
         "right": 15,
         "top": 15,
         "bottom": 15
-    }
+    },
+    shortcuts: defaultShortcuts
 };
 
 export default class Desk{
