@@ -1,13 +1,10 @@
 // Internal imports
 import Block from "./Block";
 import PageData from "../types/PageData";
-import BlockData from "../types/BlockData";
 import DeskConfig from "../types/DeskConfig";
 import * as Util from './Util';
-
-
 // External imports
-import { v4 } from 'uuid';
+import {v4} from 'uuid';
 
 
 // The class name for a page in the DOM
@@ -16,8 +13,14 @@ const pageClass = "desk-page";
 // The class name for a page wrapper in the DOM
 const wrapperClass = "desk-page-wrapper";
 
-class Page {
 
+class Page {
+    /**
+     * Create a new page
+     *
+     * @param config: The configuration of the desk
+     * @param data: Any data that the page is being instantiated with
+     */
     constructor(config: DeskConfig, data?: PageData){
         this.config = config;
         // If the page wasn't passed a UID, generate a v4 UUID
@@ -27,6 +30,7 @@ class Page {
         else{
             this.uid = data.uid;
         }
+
     }
 
     public serialize(): PageData{
@@ -46,11 +50,10 @@ class Page {
      */
     private get CSS(): string {
         // set the height and width that were passed in from the configuration
-        let styleString = `height: ${this.config.height}; width: ${this.config.width};`;
+        let styleString = `height: ${this.config.height}; width: ${this.config.width}; margin-bottom: ${this.config.spacing};`;
         // Assign a margin to each direction
-        console.log("Have config", this.config);
         for (const dir of Object.keys(this.config.margins)){
-            styleString += `padding-${dir}: ${this.config.margins[dir]};`;
+            styleString += `padding-${dir}: ${this.config.margins[dir]}px;`;
         }
         return styleString;
     }
@@ -60,9 +63,14 @@ class Page {
     }
 
     public get wrapperID(): string{
-        return `desk-wrapper-${this.uid};`
+        return `desk-wrapper-${this.uid}`;
     }
 
+    /**
+     * Render the blocks in a page, and bind an abstract page to the DOM.
+     * Should only be called once per page per document
+     *
+     */
     public render(): HTMLElement{
         /**
          * Render in the page ID and CSS styles given by document defaults. Create a wrapper inside the page
@@ -98,8 +106,15 @@ class Page {
             });
             // Bind the event listener to this instance
             const onInput = this.onInput.bind(this);
+            const onKeydown = this.onKeydown.bind(this);
+            const onClick = this.onPageClick.bind(this);
             // Add an event listener to check if the content wrapper height ever exceeds the height of the page holder
+            this.lastValidCharIdx = 0;
             this.contentWrapper.addEventListener("input", onInput);
+            // Add a click listener so that when anywhere on the page is clicked it can be focused on
+            this.pageHolder.addEventListener('click', onClick);
+            // Catch a keydown
+            this.contentWrapper.addEventListener('keydown', onKeydown);
         }
         if (!this.pageHolder.hasChildNodes()){
             // Put the wrapper into the pageholder
@@ -109,13 +124,64 @@ class Page {
         return this.pageHolder;
     }
 
+    public focus(){
+        this.contentWrapper.focus();
+    }
 
     private renderBlocks(){
 
     }
 
-    private onInput(){
-        console.log(`Got input for page ${this.uid}`);
+    private onPageClick(e){
+        this.focus();
+    }
+
+    private onKeydown(e){
+        console.log(e);
+    }
+
+    /**
+     * Check the height of the wrapper and the main page, and see if the content needs to break into a new page
+     */
+    private get isOverflowing(): boolean {
+        return (this.contentWrapper.offsetHeight >= (this.pageHolder.offsetHeight - this.config.margins.bottom));
+    }
+
+    private onInput(e){
+        if (this.doOverflowCheck()){
+            e.preventDefault();
+        }
+        else{
+            this.lastValidCharIdx = this.contentWrapper.innerText.length;
+        }
+    }
+
+
+    private doOverflowCheck(): boolean{
+        if (this.isOverflowing){
+            console.log("Overflow! Need to do page break", this.lastValidCharIdx);
+            const overflow = new CustomEvent('overflow', { detail: this.lastValidCharIdx });
+            this.pageHolder.dispatchEvent(overflow);
+        }
+        else{
+            return false;
+        }
+    }
+
+    /**
+     * Set the text of the page to a string
+     * @param s: string
+     */
+    public setText(s: string){
+        this.contentWrapper.innerText = s;
+        this.doOverflowCheck();
+    }
+
+    public truncateText(i: number): string {
+        const initialText = this.contentWrapper.innerText;
+        const sliced = initialText.slice(i+1);
+        this.contentWrapper.innerText = initialText.slice(0, i + 1);
+        return sliced;
     }
 
     private pageHolder: HTMLElement;
@@ -124,6 +190,10 @@ class Page {
     private renderedBlocks: { [index: number]: HTMLElement };
     private config: DeskConfig;
     private uid: string;
+
+    // A class variable to keep track of the index of the last character typed on the page. Will be useful for
+    // page breaks
+    private lastValidCharIdx: number;
 }
 
 export default Page;

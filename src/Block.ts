@@ -1,6 +1,7 @@
 // Internal imports
 import BlockData, {BlockType} from "../types/BlockData";
 import DeskConfig from "../types/DeskConfig";
+import * as Util from './Util';
 
 // External imports
 import { v4 } from 'uuid';
@@ -8,10 +9,6 @@ import { v4 } from 'uuid';
 // A blocks class in the DOM
 const blockClass = "desk-block";
 
-// The default height of a line in Desk
-const lineHeight = '20px';
-// The blank element that will be used to represent a blank line
-const whitespace = `<div class="desk-line desk-blank" style="height: ${lineHeight}"></div>`;
 
 class Block {
     constructor(config: DeskConfig, data?: BlockData){
@@ -37,34 +34,27 @@ class Block {
         };
     }
 
-    /**
-     * Render the block into HTML, and attach listeners
-     */
-    public get element(): string {
-        // The actual HTML. Have a switch case for each type of block
-        let blockElement;
-        switch (this.type){
-            case BlockType.Paragraph:
-                blockElement = `<p>${this.content}</p>`;
-                break;
-            case BlockType.Heading:
-                // If the block data defines an attribute 'level', use that as the leader of the header. E.g.
-                // { "data" : { "level": 5 } } = h5
-                let level;
-                if (this.data.hasOwnProperty("level")){
-                    level = this.data["level "];
-                }
-                else{
-                    // Default header is h2
-                    level = 2;
-                }
-                blockElement = `<h${level}>${this.content}</h${level}>`;
-                break;
-            case BlockType.Whitespace:
-                blockElement = whitespace;
-                break;
+    private renderContent(){
+        if (this.elem != undefined && this.content != undefined){
+            this.elem.innerHTML = this.content;
         }
-        return `<div id="${this.domID}" class="${blockClass}">${blockElement}</div>`;
+    }
+
+    public setContent(content: string){
+        this.content = content;
+        this.renderContent();
+    }
+
+    public render(){
+        if (this.elem == undefined){
+            // Render a new block into the DOM
+            this.elem = Util.createElement('div', {
+                'class': blockClass,
+                'id': this.domID
+            });
+            this.renderContent();
+        }
+        return this.elem;
     }
 
     /**
@@ -79,6 +69,7 @@ class Block {
     private data: object;
     public uid: string;
     public type: BlockType;
+    private elem: HTMLElement;
 }
 
 export default Block;

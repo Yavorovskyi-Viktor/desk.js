@@ -19,8 +19,12 @@ interface DeskConfig{
     // The page that the user is currently on. Defaults to 1
     onPage?: number;
 
-    // The margins of the page. Automatically configured to 15px each.
-    margins: { [side in Margin]: string }
+    // The margins of the page. Automatically configured to 15px each. Please note that this are locked
+    // to PX values, and not full CSS strings, because of the way that margin overflows need to be calculated.
+    margins: { [side in Margin]: number }
+
+    // The spacing beneath each page. Defaults to 20px
+    spacing: string;
 
     // Called whenever a block is modified, created, or destroyed in the document
     onChange?(e: Event): void;
