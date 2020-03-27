@@ -11,3 +11,7 @@ An open source word processor meant to match the basic featureset of word proces
 - API driven editing
     - There's a lot I could say about this, but it breaks down to the desire for the following pseudocodey API interaction
     - `editor.save(pageNum) -> {"page": 1, "blocks": {1: {...}}}` 
+    
+
+### Compatibility
+Desk uses [KeyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key), which some older browsers don't support,  in it's event loop to trigger keyboard shortcuts and create blocks in the editor. [Check CanIUse](https://caniuse.com/#feat=keyboardevent-key) to see what browsers are compatible with Desk.

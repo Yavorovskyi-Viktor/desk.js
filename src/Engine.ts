@@ -248,7 +248,8 @@ export default class Engine {
         }
         // Check for Enter, on which a new blank space should be created
         else if (e.key == "Enter"){
-            const blankLine = p.newBlock({type: BlockType.Whitespace}).render();
+            const blankLine = p.newBlock({type: BlockType.Paragraph}).render();
+            blankLine.focus();
             document.execCommand('insertHTML', false, blankLine.outerHTML);
             e.preventDefault();
             return;
