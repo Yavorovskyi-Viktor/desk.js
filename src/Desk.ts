@@ -2,7 +2,7 @@
 import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
-import  { defaultShortcuts } from "./Engine";
+import Engine, { defaultShortcuts } from "./Engine";
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -18,7 +18,10 @@ const defaultConfig: DeskConfig = {
         "top": 15,
         "bottom": 15
     },
-    shortcuts: defaultShortcuts
+    baseShortcuts: defaultShortcuts,
+    extraShortcuts: [],
+    blockClass: "desk-block",
+    lineHeight: "20px"
 };
 
 export default class Desk{
@@ -36,6 +39,10 @@ export default class Desk{
             config.onChange = config.onChange || defaultConfig.onChange;
             config.margins = config.margins || defaultConfig.margins;
             config.spacing = config.spacing || defaultConfig.spacing;
+            config.baseShortcuts = config.baseShortcuts || defaultConfig.baseShortcuts;
+            config.extraShortcuts = config.extraShortcuts || defaultConfig.extraShortcuts;
+            config.blockClass = config.blockClass || defaultConfig.blockClass;
+            config.lineHeight = config.lineHeight || defaultConfig.lineHeight;
         }
         this.config = config;
         // Make sure that the holder element exists on the page
@@ -56,6 +63,8 @@ export default class Desk{
             this.pages.push(new Page(this.config));
             this.onPage = 1;
         }
+        //Instantiate the text formatting engine
+        this.engine = new Engine(this.config);
 
         // Render the editor
         this.render();
@@ -72,7 +81,10 @@ export default class Desk{
                 // Attach an event listener to the rendered page for an overflow event
                 renderedPage.addEventListener('overflow', (e: CustomEvent) =>
                                                                 this.breakPage(page, e.detail));
-                this.editorHolder.appendChild(page.render());
+                // Pass all keydown events on the page to the text formatting engine
+                page.contentWrapper.addEventListener('keydown', (e: KeyboardEvent) =>
+                                                                                this.engine.onKeydown(e, page));
+                this.editorHolder.appendChild(renderedPage);
                 // If this is the page that the user is currently on, and it hasn't been rendered yet, focus on it
                 if (pageNum == this.onPage){
                     page.focus();
@@ -127,6 +139,7 @@ export default class Desk{
 
     public onPage: number;
     public pages: Page[];
+    private engine: Engine;
     private editorHolder: HTMLElement;
     private config: DeskConfig;
 

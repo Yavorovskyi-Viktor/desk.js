@@ -5,6 +5,8 @@ import DeskConfig from "../types/DeskConfig";
 import * as Util from './Util';
 // External imports
 import {v4} from 'uuid';
+import Engine from "./Engine";
+import BlockData from "../types/BlockData";
 
 
 // The class name for a page in the DOM
@@ -30,7 +32,8 @@ class Page {
         else{
             this.uid = data.uid;
         }
-
+        // TODO: add a method to get these from serialized data
+        this.blocks = [];
     }
 
     public serialize(): PageData{
@@ -105,16 +108,11 @@ class Page {
                 "style": "outline: 0px solid transparent;"
             });
             // Bind the event listener to this instance
-            const onInput = this.onInput.bind(this);
-            const onKeydown = this.onKeydown.bind(this);
             const onClick = this.onPageClick.bind(this);
             // Add an event listener to check if the content wrapper height ever exceeds the height of the page holder
             this.lastValidCharIdx = 0;
-            this.contentWrapper.addEventListener("input", onInput);
             // Add a click listener so that when anywhere on the page is clicked it can be focused on
             this.pageHolder.addEventListener('click', onClick);
-            // Catch a keydown
-            this.contentWrapper.addEventListener('keydown', onKeydown);
         }
         if (!this.pageHolder.hasChildNodes()){
             // Put the wrapper into the pageholder
@@ -136,9 +134,6 @@ class Page {
         this.focus();
     }
 
-    private onKeydown(e){
-        console.log(e);
-    }
 
     /**
      * Check the height of the wrapper and the main page, and see if the content needs to break into a new page
@@ -184,10 +179,28 @@ class Page {
         return sliced;
     }
 
+    public newBlock(data?: BlockData): Block{
+        const newBlock = new Block(this.config, data);
+        this.blocks.push(newBlock);
+        return newBlock;
+    }
+
+    public get currentBlock(): Block | false {
+        if (this.currentBlockIdx == undefined){
+            this.currentBlockIdx = 0;
+        }
+        if (this.blocks.length > this.currentBlockIdx){
+            return this.blocks[this.currentBlockIdx];
+        }
+        else{
+            return false;
+        }
+    }
+
     private pageHolder: HTMLElement;
-    private contentWrapper: HTMLElement;
+    public contentWrapper: HTMLElement;
+    public currentBlockIdx: number;
     private blocks: Block[];
-    private renderedBlocks: { [index: number]: HTMLElement };
     private config: DeskConfig;
     private uid: string;
 

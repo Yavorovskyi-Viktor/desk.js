@@ -4,13 +4,13 @@ export enum Action {
     // Text formatting
     makeBold,
     makeItalic,
-    makeStyle,
     makeUnderline,
     makeStrikethrough,
     makeHighlight,
+    makeColor,
 
     // Font change
-    makeFontFamily,
+    makeFontName,
     makeFontSize,
 
     // Text alignment
@@ -26,11 +26,9 @@ export enum Action {
     // Lists
     makeNumberList,
     makeBulletList,
-    makeLetterList,
 
     // Styles
     makeHeading,
-    makeSubheading,
     makeSubscript,
     makeSuperscript,
 
@@ -39,15 +37,14 @@ export enum Action {
     redo,
 
     // Copy and paste
-    copy,
-    copyWithFormatting,
-    copyWithoutFormatting,
-    paste,
     pasteWithFormatting,
     pasteWithoutFormatting,
 
     // Print
-    doPrint
+    doPrint,
+
+    // Save
+    save
 }
 
 interface EditorAction {

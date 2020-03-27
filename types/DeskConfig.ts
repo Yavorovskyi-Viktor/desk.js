@@ -30,7 +30,17 @@ interface DeskConfig{
     // Called whenever a block is modified, created, or destroyed in the document
     onChange?(e: Event): void;
 
-    shortcuts: Shortcut[]
+    // The included Desk editing shortcuts. Override this to eliminate common shortcut
+    baseShortcuts: Shortcut[]
+
+    // Extra shortcuts that you want to include in the editor. Defaults to none
+    extraShortcuts: Shortcut[]
+
+    // The classname of editor blocks
+    blockClass: string;
+
+    // The height of a blank line in the editor. Default is 20px
+    lineHeight: string;
 }
 
 export default DeskConfig;
