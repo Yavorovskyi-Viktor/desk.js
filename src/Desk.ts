@@ -3,6 +3,8 @@ import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
 import Engine, { defaultShortcuts } from "./Engine";
+import { DeskSnapshot} from "../types/DeskSnapshot";
+import Block from "./Block";
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -84,6 +86,9 @@ export default class Desk{
                 // Pass all keydown events on the page to the text formatting engine
                 page.contentWrapper.addEventListener('keydown', (e: KeyboardEvent) =>
                                                                                 this.engine.onKeydown(e, page));
+                //
+                page.contentWrapper.addEventListener('change', (e: Event) => this.onChange(e, page));
+                // Listen to page change events to notify the configured onChange handler
                 this.editorHolder.appendChild(renderedPage);
                 // If this is the page that the user is currently on, and it hasn't been rendered yet, focus on it
                 if (pageNum == this.onPage){
@@ -125,16 +130,26 @@ export default class Desk{
     /**
      * Return an object mapping integer page numbers to serialized page data
      */
-    public serialize(): PageData[] {
-        const pages = [];
-        this.pages.forEach(function(page: Page){
-           pages.push(page.serialize());
-        });
+    public save(): PageData[] {
+        for (let pageTrack in this.pages){
+            const pageNum = (+pageTrack) + 1;
+            const page = this.pages[pageTrack];
+
+        }
         return pages;
     }
 
     public get currentPage(): Page {
         return this.pages[this.onPage - 1];
+    }
+
+    private buildSnapshot(pages?: Page[], blocks?: Block[]){
+
+    }
+
+    private onChange(e: Event, p: Page){
+        console.log("Firing change");
+        const pageNum = this.pages.indexOf(p);
     }
 
     public onPage: number;

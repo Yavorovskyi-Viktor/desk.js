@@ -126,10 +126,6 @@ class Page {
         this.contentWrapper.focus();
     }
 
-    private renderBlocks(){
-
-    }
-
     private onPageClick(e){
         this.focus();
     }
@@ -200,9 +196,9 @@ class Page {
     private pageHolder: HTMLElement;
     public contentWrapper: HTMLElement;
     public currentBlockIdx: number;
+    public uid: string;
     private blocks: Block[];
     private config: DeskConfig;
-    private uid: string;
 
     // A class variable to keep track of the index of the last character typed on the page. Will be useful for
     // page breaks

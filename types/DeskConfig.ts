@@ -1,6 +1,7 @@
 // Internal imports
 import PageData from "./PageData";
 import {Shortcut} from "./KeyboardShortcut";
+import {DeskSnapshot} from "./DeskSnapshot";
 
 type Margin = "top" | "bottom" | "left" | "right"
 
@@ -28,7 +29,7 @@ interface DeskConfig{
     spacing: string;
 
     // Called whenever a block is modified, created, or destroyed in the document
-    onChange?(e: Event): void;
+    onChange?(snapshot: DeskSnapshot): void;
 
     // The included Desk editing shortcuts. Override this to eliminate common shortcut
     baseShortcuts: Shortcut[]

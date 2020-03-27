@@ -3,7 +3,7 @@ import EditorAction, {Action} from "../types/EditorAction";
 import {KeyboardShortcut, Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
-import {BlockType} from "../types/BlockData";
+import {DeskSnapshot} from "../types/DeskSnapshot";
 
 const defaultShortcuts: Shortcut[] = [
     {
@@ -231,7 +231,7 @@ export default class Engine {
         // In older browsers where the e.key property isn't defined, show an incompatible message in the editor
         if (e.key === undefined){
             if (!this.markedIncompatible){
-                this.incompatibleBrowser(p);
+                Engine.incompatibleBrowser(p);
                 this.markedIncompatible = true;
             }
             return;
@@ -246,28 +246,24 @@ export default class Engine {
             e.preventDefault();
             return;
         }
-        // Check for Enter, on which a new blank space should be created
-        else if (e.key == "Enter"){
-            const blankLine = p.newBlock({type: BlockType.Paragraph}).render();
-            blankLine.focus();
-            document.execCommand('insertHTML', false, blankLine.outerHTML);
-            e.preventDefault();
-            return;
-        }
         // Check if the key target is a block. If not, create a new block, and set the target to it.
         else if (!target.lastElementChild || target.lastElementChild.className != this.config.blockClass){
             // Determine if the key is printable
             if (e.key.length === 1){
-                const newTarget = p.newBlock({type: BlockType.Paragraph, content: e.key}).render();
+                const newTarget = p.newBlock({content: e.key}).render();
                 document.execCommand('insertHTML', false, newTarget.outerHTML);
                 e.preventDefault();
-
             }
             return;
         }
     }
 
-    private incompatibleBrowser(p: Page){
+    private handleChange(e: Event){
+
+    }
+
+
+    private static incompatibleBrowser(p: Page){
         document.execCommand('insertHTML', false,
                             '<div>Incompatible Browser</h2><p>Please upgrade to a newer version of your ' +
                                         'browser</p></div>');

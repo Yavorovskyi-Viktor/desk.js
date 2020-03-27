@@ -8,6 +8,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
 <link href="https://stackpath.bootstrapcdn.com/bootswatch/4.4.1/solar/bootstrap.min.css" rel="stylesheet" integrity="sha384-Ya0fS7U2c07GI3XufLEwSQlqhpN0ri7w/ujyveyqoxTJ2rFHJcT6SUhwhL7GM4h9" crossorigin="anonymous">
+<link rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
 
 <body>
     <div class="container container-fluid">
@@ -19,25 +22,38 @@
             </div>
         </div>
         <div class="row">
+            <div class="col-md-10 mx-auto">
+                <div class="row">
+                    <h2>Clean JSON output</h2>
+                </div>
+                <div class="row">
+                    <pre>
+                        <code id="editor-output">
+
+                        </code>
+                    </pre>
+                </div>
+            </div>
+        </div>
+        <div class="row">
             <div class="col-md-4 mx-auto">
-                <button onclick="add1000()" class="btn btn-primary">Add 1000 new pages</button>
+
             </div>
         </div>
     </div>
 </body>
 <script src="../dist/desk.js"></script>
 <script>
+
+    function onDeskChange(e){
+        console.log("Got desk change ", e);
+    }
+
     let d = new Desk({
-        holder: "desk-editor"
+        holder: "desk-editor",
+        onChange: onDeskChange
     });
 
-    function add1000(){
-        let i = 0;
-        while (i<1000){
-            d.newPage();
-            i++;
-        }
-    }
 
 </script>
 </html>

@@ -12,7 +12,7 @@ export enum SpecialKey {
 interface KeyboardShortcut{
     special: SpecialKey[],
 
-    // An integer code, e.g. 'q' = "KeyQ". Note that these are case insensitive
+    // An string code, e.g. 'q' = "KeyQ". Note that these are case insensitive. Corresponds to `KeyboardEvent.key`
     standard: string;
 }
 

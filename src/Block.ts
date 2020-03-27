@@ -1,5 +1,5 @@
 // Internal imports
-import BlockData, {BlockType} from "../types/BlockData";
+import BlockData from "../types/BlockData";
 import DeskConfig from "../types/DeskConfig";
 import * as Util from './Util';
 
@@ -12,15 +12,12 @@ class Block {
         this.config = config;
         if (data == undefined){
             this.uid = v4();
-            this.type = BlockType.Paragraph;
             this.content = '';
             this.data = {};
         }
         else{
             // Generate a unique ID for the block if not specified
             this.uid = data.uid || v4();
-            // The default block type will be a paragraph
-            this.type = data.type || BlockType.Paragraph;
             // The default content is an empty string
             this.content = data.content || '';
             // If no extra data was passed in, set an empty object
@@ -35,24 +32,13 @@ class Block {
     public serialize(): BlockData {
         return {
             uid: this.uid,
-            type: this.type,
             content: this.content
         };
     }
 
     private renderContent(){
         if (this.elem != undefined){
-            switch (this.type){
-                case (BlockType.Paragraph):
-                    if (this.content != undefined){
-                        this.elem.innerHTML = this.content;
-                    }
-                    break;
-                case (BlockType.Whitespace):
-                    // A blank line equivalent to the spacing layed out in the config
-                    this.elem.innerHTML = `<div style="height: ${this.config.lineHeight}"></div>"`;
-                    break;
-            }
+            this.elem.innerHTML = this.content;
         }
         if (this.elem != undefined && this.content != undefined){
             this.elem.innerHTML = this.content;
@@ -87,7 +73,6 @@ class Block {
     private content: string;
     private data: object;
     public uid: string;
-    public type: BlockType;
     private elem: HTMLElement;
 }
 
