@@ -6,8 +6,8 @@ interface PageData{
     // Can be useful for features like bookmarking, or anything anchored to content and not a page number
     uid: string;
 
-    // An ordered list of the blocks that the page is made up of
-    blocks: BlockData[];
+    // An enumerated object of the blocks that a page is made up of
+    blocks: { [blockNum: number]: BlockData };
 }
 
 export default PageData;

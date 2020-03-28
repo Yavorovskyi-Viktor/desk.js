@@ -3,7 +3,7 @@ import EditorAction, {Action} from "../types/EditorAction";
 import {KeyboardShortcut, Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
-import {DeskSnapshot} from "../types/DeskSnapshot";
+import DeskSnapshot from "../types/DeskSnapshot";
 
 const defaultShortcuts: Shortcut[] = [
     {

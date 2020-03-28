@@ -3,8 +3,9 @@ import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
 import Engine, { defaultShortcuts } from "./Engine";
-import { DeskSnapshot} from "../types/DeskSnapshot";
+import DeskSnapshot from "../types/DeskSnapshot";
 import Block from "./Block";
+import BlockData from "../types/BlockData";
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -128,23 +129,121 @@ export default class Desk{
     }
 
     /**
-     * Return an object mapping integer page numbers to serialized page data
+     * Save the current state of the editor. If num is not specified, save all pages
+     *
+     * @param num: If provided, save just a given page instead of all pages.
      */
-    public save(): PageData[] {
-        for (let pageTrack in this.pages){
-            const pageNum = (+pageTrack) + 1;
-            const page = this.pages[pageTrack];
-
+    public save(num?: number): DeskSnapshot {
+        const currPageSnapshots = {};
+        if (num === undefined) {
+            for (let pageTrack in this.pages) {
+                const pageNum = (+pageTrack) + 1;
+                const page = this.pages[pageTrack];
+                currPageSnapshots[pageNum] = this.buildSnapshot(page);
+            }
         }
-        return pages;
+        else {
+            if (this.validatePageNumber(num)){
+                currPageSnapshots[num] = this.buildSnapshot(num);
+            }
+            else{
+                return {pages: {}};
+            }
+        }
+        return {pages: currPageSnapshots};
     }
 
     public get currentPage(): Page {
         return this.pages[this.onPage - 1];
     }
 
-    private buildSnapshot(pages?: Page[], blocks?: Block[]){
+    /**
+     * A function that validates that a page number is in the current pages.
+     * Returns true if it is, throws a console error and returns false if not
+     */
+    private validatePageNumber(pageNum: number): boolean {
+        if (pageNum > 0){
+            if (pageNum <= this.pages.length){
+                return true;
+            }
+        }
+        console.error(`Invalid page number: ${pageNum}`);
+        return false;
+    }
 
+
+    /**
+     * Build a snapshot of a given page. If blockNumbers or blockUIDs is defined, return just those blocks. From
+     * the page snapshot. Otherwise, return all pages
+     *
+     * @param page The page to build a snapshot of. Either a page number >= 1, a string page UID, or a page object
+     * @param blockNumbers: A set of block numbers, where the first block in the page is 1.
+     * @param blockUIDs: A set of block string UIDs
+     */
+    private buildSnapshot(page: number | string | Page, blockNumbers?: Set<number>, blockUIDs?: Set<string>):
+        PageData {
+
+        let pageObj;
+        if (typeof(page) == "number"){
+            if (this.validatePageNumber(page)){
+                pageObj = this.pages[page-1];
+            }
+            else{
+                return;
+            }
+        }
+        else if (typeof(page) == "string"){
+            pageObj = this.pages.find((value: Page) => value.uid === page);
+            if (pageObj == undefined){
+                console.error(`Couldn't find page with UID ${page}`);
+                return;
+            }
+        }
+        else if (page instanceof Page){
+            pageObj = page;
+        }
+        else{
+            console.error(`Unrecognized page type ${typeof(page)}`, page);
+            return;
+        }
+        // This predicate will determine if a block should be included in the snapshot
+        let blockComparator;
+        const blockNumbersUsed = (blockNumbers != undefined && blockNumbers.size > 0);
+        const blockUIDsUsed = (blockUIDs != undefined && blockUIDs.size > 0);
+        // If no blocks were specified, resolve all blocks
+        if (!blockNumbersUsed && !blockUIDsUsed){
+            blockComparator = () => true;
+        }
+        else{
+            // Build predicates
+            if (blockNumbersUsed && blockUIDsUsed){
+                blockComparator = (i: number, b: Block) => (blockNumbers.has(i) || blockUIDs.has(b.uid));
+            }
+            else if (blockNumbersUsed){
+                blockComparator = (i: number) => (blockNumbers.has(i));
+            }
+            else if (blockUIDsUsed){
+                blockComparator = (i: number, b: Block) => (blockUIDs.has(b.uid));
+            }
+        }
+        const blocks = {};
+        // Iterate through the blocks in the page
+        console.log(pageObj);
+        for (let blockTrack in pageObj.blocks) {
+            console.log(`Checking block ${blockTrack}`);
+            const block: Block = pageObj.blocks[blockTrack];
+            console.log(`Got block ${block.uid}`);
+            const blockIdx: number = (+blockTrack);
+            const blockNum: number = blockIdx+1;
+            // If a block matches our built comparator, push it onto the snapshot object
+            if (blockComparator(blockNum, block)){
+                console.log("Block resolved");
+                blocks[blockNum] = block.serialize();
+            }
+        }
+        const snapshot: PageData = {uid: pageObj.uid, blocks: blocks};
+        // Return the resulting snapshot
+        return snapshot;
     }
 
     private onChange(e: Event, p: Page){

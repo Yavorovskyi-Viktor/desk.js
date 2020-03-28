@@ -1,7 +1,7 @@
 // Internal imports
 import PageData from "./PageData";
 import {Shortcut} from "./KeyboardShortcut";
-import {DeskSnapshot} from "./DeskSnapshot";
+import DeskSnapshot from "./DeskSnapshot";
 
 type Margin = "top" | "bottom" | "left" | "right"
 

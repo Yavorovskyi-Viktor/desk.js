@@ -1,11 +1,7 @@
-import BlockData from "./BlockData";
-
-interface PageSnapshot {
-    blocks: { [blockNum: number]: BlockData }
-}
+import PageData from "./PageData";
 
 interface DeskSnapshot {
-    pages: { [pageNum: number]: PageSnapshot }
+    pages: { [pageNum: number]: PageData}
 }
 
-export { PageSnapshot, DeskSnapshot };
+export default DeskSnapshot;

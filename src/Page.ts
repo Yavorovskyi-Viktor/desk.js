@@ -36,18 +36,6 @@ class Page {
         this.blocks = [];
     }
 
-    public serialize(): PageData{
-        // Serialize all the page blocks
-        let serializedBlocks = [];
-        this.blocks.forEach(function(block: Block){
-           serializedBlocks.push(block.serialize());
-        });
-        return {
-            uid: this.uid,
-            blocks: serializedBlocks
-        }
-    }
-
     /**
      * Use inline styling for a page
      */
@@ -177,7 +165,9 @@ class Page {
 
     public newBlock(data?: BlockData): Block{
         const newBlock = new Block(this.config, data);
+        console.log("Adding block");
         this.blocks.push(newBlock);
+        console.log(this.blocks);
         return newBlock;
     }
 
@@ -197,7 +187,7 @@ class Page {
     public contentWrapper: HTMLElement;
     public currentBlockIdx: number;
     public uid: string;
-    private blocks: Block[];
+    public blocks: Block[];
     private config: DeskConfig;
 
     // A class variable to keep track of the index of the last character typed on the page. Will be useful for
