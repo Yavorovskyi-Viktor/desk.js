@@ -97,6 +97,11 @@ export default class Desk{
                 }
             }
         }
+        // Set the cursor on the current onPage
+        const currentBlock = this.currentPage.currentBlock;
+        if (currentBlock instanceof Block){
+            Engine.set(currentBlock.render());
+        }
     }
 
     public newPage(){

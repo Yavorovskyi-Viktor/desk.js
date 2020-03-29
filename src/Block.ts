@@ -23,7 +23,6 @@ class Block {
             // If no extra data was passed in, set an empty object
             this.data = data.data || {};
         }
-
     }
 
     /**

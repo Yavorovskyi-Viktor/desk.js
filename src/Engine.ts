@@ -4,6 +4,7 @@ import {KeyboardShortcut, Shortcut, SpecialKey} from "../types/KeyboardShortcut"
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import DeskSnapshot from "../types/DeskSnapshot";
+import Block from "./Block";
 
 const defaultShortcuts: Shortcut[] = [
     {
@@ -246,6 +247,12 @@ export default class Engine {
             e.preventDefault();
             return;
         }
+        // Handle new line behavior
+        else if (e.key == "Enter"){
+            e.preventDefault();
+            p.newLine();
+            return;
+        }
         // Check if the key target is a block. If not, create a new block, and set the target to it.
         else if (!target.lastElementChild || target.lastElementChild.className != this.config.blockClass){
             // Determine if the key is printable
@@ -258,10 +265,36 @@ export default class Engine {
         }
     }
 
-    private handleChange(e: Event){
 
+    /**
+     * (This function is a modified version of the one used for this same purpose by the excellent project editor.js
+     * in caret.ts, https://github.com/codex-team/editor.js/blob/master/src/components/modules/caret.ts). Thank you
+     * editor.js! This saved me a lot of pain
+     *
+     * Creates Document Range and sets caret to the element with offset
+     *
+     * @param {HTMLElement} element - target node.
+     * @param {Number} offset - offset
+     */
+    public static set(element: HTMLElement, offset: number = 0): void {
+        const range = document.createRange(),
+            selection = window.getSelection();
+
+        range.setStart(element, offset);
+        range.setEnd(element, offset);
+
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        /** If new cursor position is not visible, scroll to it */
+        const {top, bottom} = element.nodeType === Node.ELEMENT_NODE
+            ? element.getBoundingClientRect()
+            : range.getBoundingClientRect();
+        const {innerHeight} = window;
+
+        if (top < 0) { window.scrollBy(0, top); }
+        if (bottom > innerHeight) { window.scrollBy(0, bottom - innerHeight); }
     }
-
 
     private static incompatibleBrowser(p: Page){
         document.execCommand('insertHTML', false,
