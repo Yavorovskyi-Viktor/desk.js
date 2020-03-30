@@ -1,12 +1,11 @@
 // Internal imports
-import Block from "./Block";
 import PageData from "../types/PageData";
 import DeskConfig from "../types/DeskConfig";
 import * as Util from './Util';
 // External imports
-import {v4} from 'uuid';
 import Engine from "./Engine";
 import BlockData from "../types/BlockData";
+import {uuid} from "./Util";
 
 
 // The class name for a page in the DOM
@@ -27,13 +26,14 @@ class Page {
         this.config = config;
         // If the page wasn't passed a UID, generate a v4 UUID
         if (data == undefined){
-            this.uid = v4();
+            this.uid = uuid();
+            this.initialBlocks = [];
         }
         else{
             this.uid = data.uid;
+            this.initialBlocks = data.blocks || {};
         }
-        // TODO: add a method to get these from serialized data
-        this.blocks = [];
+
     }
 
     /**
@@ -106,64 +106,126 @@ class Page {
         }
         if (!this.contentWrapper.hasChildNodes()){
             // Render the initial blocks
-            const initialBlockElements: HTMLElement[] = [];
-            if (this.blocks != undefined && this.blocks.length != 0){
-                for (let block of this.blocks){
-                    initialBlockElements.push(block.render());
+            const initialKeys = Object.keys(this.initialBlocks);
+            if (this.initialBlocks != undefined && initialKeys.length != 0){
+                for (let blockIdx of initialKeys){
+                    this.setBlock((+blockIdx), this.initialBlocks[blockIdx])
                 }
             }
             else{
-                // If there are no initial blocks specified, create an empty one. Note: this needs to have a zero-width
-                // character in it, or else the cursor won't display in Chrome, **because the way chrome treats
-                // contenteditable documents is broken!!**
-                initialBlockElements.push(this.newBlock({content: "&#8203;"}).render());
+                this.newBlock();
             }
             // Set the current block
-            this.currentBlockIdx = this.blocks.length - 1;
-            // Put the initial blocks on the page
-            for (let blockElem of initialBlockElements){
-                this.contentWrapper.appendChild(blockElem);
-            }
+            this.currentBlockIdx = this.contentWrapper.children.length - 1;
         }
         return this.pageHolder;
     }
 
+    private renderBlock(block?: BlockData): HTMLElement {
+        // If there are ever any custom block data elements, handle those here
+        const elem = Util.createElement('div', {
+            "class": this.config.blockClass
+        });
+        if (block != undefined){
+            elem.innerHTML = block.content;
+        }
+        return elem;
+    }
+
+
+    /**
+     * Set the block at a particular index to the given data
+     *
+     * @param index The index that the block exists at
+     * @param data The data
+     */
+    private setBlock(index: number, data?: BlockData){
+        let content;
+        if (data == undefined){
+            content = '';
+        }
+        else {
+            content = data.content || '';
+        }
+        this.contentWrapper.children[index].innerHTML = content;
+    }
+
+    /**
+     * Insert a block as the next child onto the page
+     *
+     * @param data the block data to render
+     */
+    private newBlock(data?: BlockData){
+        // If there's no content in the data, insert a zero width character, because otherwise Chrome won't put the
+        // cursor into it. This will be removed by the formatting engine as soon as there are characters in the block
+        if (data == undefined){
+            data = {content: "&#8203;"};
+        }
+        else {
+            data.content = data.content || "&#8203;";
+        }
+        this.contentWrapper.appendChild(this.renderBlock(data));
+    }
+
+    /**
+     * Insert a block at a given place in the page
+     *
+     * @param index The index to insert the block at
+     * @param data The block data
+     */
+    private insertBlock(index: number, data?: BlockData){
+        // Render the block into an HTML element
+        const block = this.renderBlock(data);
+        // Get the current number of children on the page. Note that this is a length, so 1 more than the index
+        const numChildren = this.contentWrapper.children.length;
+        // If the index is one more than the current number of block children, insert it as the next item onto the page
+        if (index === numChildren){
+            this.newBlock(data);
+        }
+        // If the index is less than or equal to the current number of block children, modify an existing block
+        else if (index < numChildren){
+            this.setBlock(index, data);
+        }
+        // Otherwise, if the index hasn't been reached yet, create empty new blocks until we've either
+        // reached the end of the page (index was invalid), or until the index is the next child
+        else {
+            let causedOverflow = false;
+            while (this.contentWrapper.children.length > index && !causedOverflow){
+                // Check if the page is going to overflow
+                if (this.isOverflowing){
+                    console.error(`Caused page to overflow while expanding to index ${index}, stopping`);
+                    causedOverflow = true;
+                }
+                else {
+                    // Create a blank line
+                    this.newBlock();
+                }
+            }
+            if (!causedOverflow){
+                // If we didn't cause an overflow, finally create the block that was passed in
+                this.newBlock(data);
+            }
+        }
+    }
+
     public focus(){
+        if (this.currentBlockIdx != undefined){
+            Engine.set(this.currentBlock);
+        }
         this.contentWrapper.focus();
     }
 
-    public setCursor(block?: Block){
-        const range = document.createRange();
-        const sel = window.getSelection();
-        let useBlock: Block;
-        if (block == undefined){
-            const currentBlock = this.currentBlock;
-            if (currentBlock instanceof Block){
-                console.log("Using current block", currentBlock);
-                useBlock = currentBlock;
-            }
-            else{
-                console.error("setCursor called without block and with uninitialized currentBlock");
-                return;
-            }
-        }
-        else{
-            console.log("Using passed block");
-            useBlock = block;
-        }
-        // This call to render should be fine, since blocks internally cache their render state
-        const lastNode = useBlock.render();
-        range.setStart(lastNode, lastNode.innerText.length);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        this.focus();
+    public getBlock(i: number): HTMLElement{
+        return this.contentWrapper.children[i] as HTMLElement;
+    }
+
+    public get blocks(){
+        return this.contentWrapper.children;
     }
 
     private onPageClick(e){
-        this.focus();
+        this.contentWrapper.focus();
     }
-
 
     /**
      * Check the height of the wrapper and the main page, and see if the content needs to break into a new page
@@ -172,109 +234,29 @@ class Page {
         return (this.contentWrapper.offsetHeight >= (this.pageHolder.offsetHeight - this.config.margins.bottom));
     }
 
-
-    public truncateText(i: number): string {
-        const initialText = this.contentWrapper.innerText;
-        const sliced = initialText.slice(i+1);
-        this.contentWrapper.innerText = initialText.slice(0, i + 1);
-        return sliced;
-    }
-
-    public newBlock(data?: BlockData): Block{
-        console.log("Creating block");
-        const newBlock = new Block(this.config, data);
-        this.blocks.push(newBlock);
-        this.currentBlockIdx = this.blocks.length - 1;
-        return newBlock;
-    }
-
-    /**
-     * Insert a block onto the page
-     *
-     * @param position the **index** (not block number!) to insert the block at
-     * @param block the block to insert
-     */
-    public insertBlock(position: number, block: Block){
-        if (position === this.blocks.length){
-            this.blocks.push(block);
-        }
-        else{
-             this.blocks.splice(position, 0, block);
-        }
-        // Actually add the block onto the page
-        const previousBlock: Block = this.blocks[position-1];
-        // Use the render cache to find the element of the previous block, and insert the block after it in the DOM
-        previousBlock.render().insertAdjacentElement('afterend', block.render());
-    }
-
-    /**
-     * Create a new block, insert it into the page, and set it as the current block
-     */
-    public newLine(data?: BlockData){
-        // Figure out where to put the block
-        let insertIdx;
-        if (this.currentBlockIdx == undefined){
-            insertIdx = this.blocks.length;
-        }
-        else{
-            insertIdx = this.currentBlockIdx + 1;
-        }
-        // If the block doesn't already have content, put a zero width character in it, because **Chrome is broken!**
-        if (data == undefined){
-            data = {content: "&#8203;"}
-        }
-        else{
-            data.content =data.content || "&#8203;";
-        }
-        // Create the new block
-        const lineBlock = new Block(this.config, data);
-        // Push it onto the page
-        this.insertBlock(insertIdx, lineBlock);
-        // Set the current block
-        this.currentBlockIdx = insertIdx;
-        // Set the cursor to the block
-        Engine.set(lineBlock.render());
-    }
-
-    public deleteBlock(block: Block | number | string){
-        let filterPred;
-        const blockType = typeof(block);
-        if (block instanceof Block){
-            filterPred = (b: Block) => b !== block;
-        }
-        else if (blockType == "number"){
-            // Don't bother filtering if we're passed an index
-            this.blocks.splice(block as number - 1, 1);
-            return;
-        }
-        else if (blockType == "string"){
-            filterPred = (b: Block) => b.uid !== block;
-        }
-        else{
-            console.error(`Unsupported block type ${blockType} for deleteBlock call`, block);
-            return;
-        }
-        this.blocks = this.blocks.filter(filterPred);
-    }
-
-    public get currentBlock(): Block | false {
+    public get currentBlock(): HTMLElement {
         if (this.currentBlockIdx == undefined){
             this.currentBlockIdx = 0;
         }
-        if (this.blocks.length > this.currentBlockIdx){
-            return this.blocks[this.currentBlockIdx];
+        if (this.contentWrapper.children.length > 0){
+            return this.contentWrapper.children[this.currentBlockIdx] as HTMLElement;
         }
         else{
-            return false;
+            console.error(`Error: content wrapper for page ${this.uid} has no child nodes. This isn't supposed to happen`);
+            return undefined;
         }
+    }
+
+    public get pageBottom(): number {
+        return this.pageHolder.getBoundingClientRect().bottom - this.config.margins.bottom;
     }
 
     private pageHolder: HTMLElement;
     public contentWrapper: HTMLElement;
     public currentBlockIdx: number;
     public uid: string;
-    public blocks: Block[];
     private config: DeskConfig;
+    private initialBlocks: { [index: number]: BlockData };
 }
 
 export default Page;

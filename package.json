@@ -1,6 +1,6 @@
 {
   "name": "desk-editor.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Will Beddow",
   "main": "dist/editor.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "@babel/preset-typescript": "^7.9.0",
     "babel-loader": "^8.1.0",
     "babel-plugin-add-module-exports": "^1.0.2",
+    "terser-webpack-plugin": "^2.3.5",
     "ts-loader": "^6.2.2",
     "typescript": "^3.8.3",
     "webpack": "^4.42.1",
@@ -20,8 +21,6 @@
   },
   "dependencies": {
     "@babel/plugin-transform-runtime": "^7.9.0",
-    "babel-plugin-class-display-name": "^2.1.0",
-    "lodash": "^4.17.15",
-    "uuid": "^7.0.2"
+    "babel-plugin-class-display-name": "^2.1.0"
   }
 }

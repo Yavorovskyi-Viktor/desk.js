@@ -4,7 +4,6 @@ import PageData from "../types/PageData";
 import Page from './Page';
 import Engine, { defaultShortcuts } from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
-import Block from "./Block";
 import BlockData from "../types/BlockData";
 
 const defaultConfig: DeskConfig = {
@@ -81,8 +80,17 @@ export default class Desk{
                 // Pass all keydown and input events on the page to the text formatting engine
                 page.contentWrapper.addEventListener('keydown', (e: KeyboardEvent) =>
                                                                                 this.engine.onKeydown(e, page));
-                page.contentWrapper.addEventListener('change', (e: Event) => this.onChange(e, page));
-                // Listen to page change events to notify the configured onChange handler
+                // Pass overflow events back to the page manager so we can break the page
+                page.contentWrapper.addEventListener('overflow', (e: CustomEvent) =>
+                                                                        this.breakPage(pageNum, e.detail));
+                // Listen to mutations and pass them as well to the formatting engine
+                const observer = new MutationObserver((mutations) =>
+                    this.engine.handleMutation(mutations, page));
+                observer.observe(page.contentWrapper, {
+                    characterData: true,
+                    childList: true,
+                });
+
                 this.editorHolder.appendChild(renderedPage);
                 // If this is the page that the user is currently on, and it hasn't been rendered yet, focus on it
                 if (pageNum == this.onPage){
@@ -92,9 +100,7 @@ export default class Desk{
         }
         // Set the cursor on the current onPage
         const currentBlock = this.currentPage.currentBlock;
-        if (currentBlock instanceof Block){
-            Engine.set(currentBlock.render());
-        }
+        Engine.set(currentBlock);
     }
 
     public newPage(){
@@ -145,16 +151,25 @@ export default class Desk{
         return false;
     }
 
+    private static serializeBlock(blockElem: HTMLElement): BlockData{
+        let blockInner = blockElem.innerHTML;
+        // Remove zero width characters
+        if (blockInner === "&#8203;"){
+            blockInner = "";
+        }
+        return {
+            content: blockInner
+        };
+    }
 
     /**
      * Build a snapshot of a given page. If blockNumbers or blockUIDs is defined, return just those blocks. From
      * the page snapshot. Otherwise, return all pages
      *
      * @param page The page to build a snapshot of. Either a page number >= 1, a string page UID, or a page object
-     * @param blockNumbers: A set of block numbers, where the first block in the page is 1.
-     * @param blockUIDs: A set of block string UIDs
+     * @param blockNumbers: A set of block indexes
      */
-    private buildSnapshot(page: number | string | Page, blockNumbers?: Set<number>, blockUIDs?: Set<string>):
+    private buildSnapshot(page: number | string | Page, blockNumbers?: number[]):
         PageData {
 
         let pageObj;
@@ -180,40 +195,24 @@ export default class Desk{
             console.error(`Unrecognized page type ${typeof(page)}`, page);
             return;
         }
-        // This predicate will determine if a block should be included in the snapshot
-        let blockComparator;
-        const blockNumbersUsed = (blockNumbers != undefined && blockNumbers.size > 0);
-        const blockUIDsUsed = (blockUIDs != undefined && blockUIDs.size > 0);
-        // If no blocks were specified, resolve all blocks
-        if (!blockNumbersUsed && !blockUIDsUsed){
-            blockComparator = () => true;
+        const blocks = {};
+        if (blockNumbers != undefined && blockNumbers.length > 0){
+            blockNumbers.forEach(function(i: number){
+               blocks[i] = Desk.serializeBlock(pageObj.getBlock(i));
+            });
         }
         else{
-            // Build predicates
-            if (blockNumbersUsed && blockUIDsUsed){
-                blockComparator = (i: number, b: Block) => (blockNumbers.has(i) || blockUIDs.has(b.uid));
-            }
-            else if (blockNumbersUsed){
-                blockComparator = (i: number) => (blockNumbers.has(i));
-            }
-            else if (blockUIDsUsed){
-                blockComparator = (i: number, b: Block) => (blockUIDs.has(b.uid));
-            }
-        }
-        const blocks = {};
-        // Iterate through the blocks in the page
-        for (let blockTrack in pageObj.blocks) {
-            const block: Block = pageObj.blocks[blockTrack];
-            const blockIdx: number = (+blockTrack);
-            const blockNum: number = blockIdx+1;
-            // If a block matches our built comparator, push it onto the snapshot object
-            if (blockComparator(blockNum, block)){
-                blocks[blockNum] = block.serialize();
-            }
+            pageObj.blocks.forEach(function(b: HTMLElement, i: number){
+               blocks[i] = Desk.serializeBlock(b);
+            });
         }
         const snapshot: PageData = {uid: pageObj.uid, blocks: blocks};
         // Return the resulting snapshot
         return snapshot;
+    }
+
+    private breakPage(pageNum: number, nextPageContent){
+
     }
 
     private onChange(e: Event, p: Page){
@@ -226,5 +225,4 @@ export default class Desk{
     private engine: Engine;
     private editorHolder: HTMLElement;
     private config: DeskConfig;
-
 }

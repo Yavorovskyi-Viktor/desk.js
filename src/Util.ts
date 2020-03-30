@@ -11,4 +11,19 @@ function createElement(tag: string, attrs: Object): HTMLElement{
     return elem;
 }
 
-export { createElement };
+/**
+ * Create a (not cryptographically secure), but good enough for unique page numbers, UUID.
+ *
+ * Found at https://codepen.io/Jvsierra/pen/BNbEjW
+ */
+function uuid() {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+        s4() + '-' + s4() + s4() + s4();
+}
+
+export { createElement, uuid };

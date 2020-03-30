@@ -4,7 +4,6 @@ import {KeyboardShortcut, Shortcut, SpecialKey} from "../types/KeyboardShortcut"
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import DeskSnapshot from "../types/DeskSnapshot";
-import Block from "./Block";
 
 const defaultShortcuts: Shortcut[] = [
     {
@@ -238,35 +237,40 @@ export default class Engine {
             }
             return;
         }
-        // Determine if the page is overflowing
-        // Check to see if the page is overflowing
-        if (p.isOverflowing){
-            console.log("Overflowing! Do something about this");
-        }
         // Determine if a keyboard shortcut has been activated
         const shortcut = this.matchShortcut(e);
-        const target = e.target as HTMLElement;
         if (shortcut){
             console.log(`Triggering shortcut ${shortcut.name}`);
             this.executeAction({action: shortcut.action, detail: {}});
             e.preventDefault();
             return;
         }
-        // Handle new line behavior
-        else if (e.key == "Enter"){
-            e.preventDefault();
-            p.newLine();
-            return;
-        }
-        // Check if the key target is a block. If not, create a new block, and set the target to it.
-        else if (!target.lastElementChild || target.lastElementChild.className != this.config.blockClass){
-            // Determine if the key is printable
-            if (e.key.length === 1){
-                const newTarget = p.newBlock({content: e.key}).render();
-                document.execCommand('insertHTML', false, newTarget.outerHTML);
+        // Prevent the user from deleting the initial block
+        if (e.key == "Backspace" && p.contentWrapper.childNodes.length == 1){
+            const firstChild = p.contentWrapper.firstChild as HTMLElement;
+            if (firstChild.innerText.length == 0 || (firstChild.innerText.length == 1 &&
+                    firstChild.innerText == "&#8203;")){
                 e.preventDefault();
             }
-            return;
+        }
+    }
+
+    public handleMutation(mutationsList: MutationRecord[], p: Page){
+        // Determine if the page is overflowing
+        if (p.isOverflowing){
+            const pageBottom  = p.pageBottom;
+            console.log(`Overflowing, page bottom is ${pageBottom} nodes:`);
+            for (let childIdx in p.contentWrapper.children) {
+                const child = p.contentWrapper.children.item((+childIdx));
+                const rects = child.getBoundingClientRect();
+                const lineBottom = rects.bottom;
+                const lineTop = rects.top;
+                // Check to see if the element is fully under the page
+                if (lineBottom > pageBottom){
+                    console.log("Block overflowed: ");
+                    console.log(child);
+                }
+            }
         }
     }
 
@@ -302,9 +306,8 @@ export default class Engine {
     }
 
     private static incompatibleBrowser(p: Page){
-        document.execCommand('insertHTML', false,
-                            '<div>Incompatible Browser</h2><p>Please upgrade to a newer version of your ' +
-                                        'browser</p></div>');
+        console.error("This browser is not compatible with the desk editor. Please update to a newer browser");
+
     }
 
     private markedIncompatible: boolean = false;
