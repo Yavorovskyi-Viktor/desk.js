@@ -61,6 +61,10 @@ class Block {
         return this.elem;
     }
 
+    public lastValidCharIdx(){
+
+    }
+
     /**
      * Get the HTML ID that's rendered in the DOM. Of the format block-{UID}
      */

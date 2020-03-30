@@ -97,8 +97,6 @@ class Page {
             });
             // Bind the event listener to this instance
             const onClick = this.onPageClick.bind(this);
-            // Add an event listener to check if the content wrapper height ever exceeds the height of the page holder
-            this.lastValidCharIdx = 0;
             // Add a click listener so that when anywhere on the page is clicked it can be focused on
             this.pageHolder.addEventListener('click', onClick);
         }
@@ -170,30 +168,10 @@ class Page {
     /**
      * Check the height of the wrapper and the main page, and see if the content needs to break into a new page
      */
-    private get isOverflowing(): boolean {
+    public get isOverflowing(): boolean {
         return (this.contentWrapper.offsetHeight >= (this.pageHolder.offsetHeight - this.config.margins.bottom));
     }
 
-    private onInput(e){
-        if (this.doOverflowCheck()){
-            e.preventDefault();
-        }
-        else{
-            this.lastValidCharIdx = this.contentWrapper.innerText.length;
-        }
-    }
-
-
-    private doOverflowCheck(): boolean{
-        if (this.isOverflowing){
-            console.log("Overflow! Need to do page break", this.lastValidCharIdx);
-            const overflow = new CustomEvent('overflow', { detail: this.lastValidCharIdx });
-            this.pageHolder.dispatchEvent(overflow);
-        }
-        else{
-            return false;
-        }
-    }
 
     public truncateText(i: number): string {
         const initialText = this.contentWrapper.innerText;
@@ -297,10 +275,6 @@ class Page {
     public uid: string;
     public blocks: Block[];
     private config: DeskConfig;
-
-    // A class variable to keep track of the index of the last character typed on the page. Will be useful for
-    // page breaks
-    private lastValidCharIdx: number;
 }
 
 export default Page;

@@ -220,6 +220,7 @@ export default class Engine {
         }
     }
 
+
     /**
      * Handle a keydown event from any page in the document. Check relevant keyboard shortcuts, manage block
      * positioning, and trigger actions
@@ -237,7 +238,11 @@ export default class Engine {
             }
             return;
         }
-
+        // Determine if the page is overflowing
+        // Check to see if the page is overflowing
+        if (p.isOverflowing){
+            console.log("Overflowing! Do something about this");
+        }
         // Determine if a keyboard shortcut has been activated
         const shortcut = this.matchShortcut(e);
         const target = e.target as HTMLElement;

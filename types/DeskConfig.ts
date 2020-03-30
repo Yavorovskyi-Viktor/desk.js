@@ -40,8 +40,6 @@ interface DeskConfig{
     // The classname of editor blocks
     blockClass: string;
 
-    // The height of a blank line in the editor. Default is 20px
-    lineHeight: string;
 }
 
 export default DeskConfig;

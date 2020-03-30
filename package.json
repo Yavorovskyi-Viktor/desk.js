@@ -1,7 +1,8 @@
 {
-  "name": "desk.js",
+  "name": "desk-editor.js",
   "version": "1.0.0",
   "author": "Will Beddow",
+  "main": "dist/editor.js",
   "scripts": {
     "build": "babel --out-file dist/desk.js src/Desk.ts"
   },
