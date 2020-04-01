@@ -255,20 +255,69 @@ export default class Engine {
         }
     }
 
+    /**
+     * Walk the DOM tree to recursively find out if child is an ancestor of parent
+     * @param child The child element
+     * @param parent The parent element in question
+     */
+    public static isParent(child: HTMLElement, parent: HTMLElement): boolean{
+        // Stop when we hit the page wrapper
+        if (child.parentElement.classList.contains("page-wrapper")){
+            return false;
+        }
+        else {
+            if (child.parentElement == parent){
+                return true;
+            }
+            else {
+                return this.isParent(child, parent);
+            }
+        }
+    }
+
     public handleMutation(mutationsList: MutationRecord[], p: Page){
         // Determine if the page is overflowing
         if (p.isOverflowing){
+            const nextPageItems = [];
             const pageBottom  = p.pageBottom;
             console.log(`Overflowing, page bottom is ${pageBottom} nodes:`);
             for (let childIdx in p.contentWrapper.children) {
                 const child = p.contentWrapper.children.item((+childIdx));
                 const rects = child.getBoundingClientRect();
-                const lineBottom = rects.bottom;
-                const lineTop = rects.top;
                 // Check to see if the element is fully under the page
-                if (lineBottom > pageBottom){
-                    console.log("Block overflowed: ");
-                    console.log(child);
+                if (rects.bottom >= pageBottom){
+                    if (rects.top >= pageBottom){
+                        console.log("Overflow type: full");
+                        let newChild = document.removeChild(child);
+                        nextPageItems.push(newChild);
+                    }
+                    else{
+                        console.log("Overflow type: partial");
+                        const collectedMutationText = [];
+                        mutationsList.forEach(function(mutation){
+                           if (mutation.type == "characterData"){
+                               if (Engine.isParent(mutation.target as HTMLElement, child as HTMLElement)) {
+                                   // Collect the previous value for character data. If there was an old value, we need to
+                                   // compute what to put on the new page. Otherwise, we can just put the entire paragraph
+                                   // on the new page
+                                   if (mutation.oldValue) {
+                                       // Figure out where the text broke
+                                       const oldLength = mutation.oldValue.length;
+                                       const splitIndex = oldLength - 1;
+                                       // Extract the contents of the text past where it broke
+                                       const range = document.createRange();
+                                       range.setStart(mutation.target, splitIndex);
+                                       range.setEndAfter(mutation.target);
+                                       collectedMutationText.push(range.extractContents());
+                                   } else {
+                                       let newChild = document.removeChild(child);
+                                       nextPageItems.push(newChild);
+                                   }
+                               }
+                            }
+                        });
+                        console.log(collectedMutationText);
+                    }
                 }
             }
         }

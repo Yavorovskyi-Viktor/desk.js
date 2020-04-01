@@ -88,7 +88,9 @@ export default class Desk{
                     this.engine.handleMutation(mutations, page));
                 observer.observe(page.contentWrapper, {
                     characterData: true,
+                    characterDataOldValue: true,
                     childList: true,
+                    subtree: true
                 });
 
                 this.editorHolder.appendChild(renderedPage);

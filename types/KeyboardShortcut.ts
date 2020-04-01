@@ -4,9 +4,9 @@ import EditorAction, { Action } from "./EditorAction";
 // Keys for which the browser will append their state to another keydown event
 export enum SpecialKey {
     // Since OS X CMD is tied to Meta, make CTRL and Meta equivalent in shortcuts
-    controlMeta,
-    alt,
-    shift
+    controlMeta = 'controlMeta',
+    alt = 'alt',
+    shift = 'shift'
 }
 
 interface KeyboardShortcut{

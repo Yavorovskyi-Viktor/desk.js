@@ -2,49 +2,49 @@
 
 export enum Action {
     // Text formatting
-    makeBold,
-    makeItalic,
-    makeUnderline,
-    makeStrikethrough,
-    makeHighlight,
-    makeColor,
+    makeBold = 'makeBold',
+    makeItalic = 'makeItalic',
+    makeUnderline = 'makeUnderline',
+    makeStrikethrough = 'makeStrikethrough',
+    makeHighlight = 'makeHighlight',
+    makeColor = 'makeColor',
 
     // Font change
-    makeFontName,
-    makeFontSize,
+    makeFontName = 'makeFontName',
+    makeFontSize = 'makeFontSize',
 
     // Text alignment
-    alignLeft,
-    alignCenter,
-    alignRight,
-    alignJustify,
+    alignLeft = 'alignLeft',
+    alignCenter = 'alignCenter',
+    alignRight = 'alignRight',
+    alignJustify = 'alignJustify',
 
     // Indentation
-    indent,
-    unindent,
+    indent = 'indent',
+    unindent = 'unindent',
 
     // Lists
-    makeNumberList,
-    makeBulletList,
+    makeNumberList = 'makeNumberList',
+    makeBulletList = 'makeBulletList',
 
     // Styles
-    makeHeading,
-    makeSubscript,
-    makeSuperscript,
+    makeHeading = 'makeHeading',
+    makeSubscript = 'makeSubscript',
+    makeSuperscript = 'makeSuperscript',
 
     // Editing actions
-    undo,
-    redo,
+    undo = 'undo',
+    redo = 'redo',
 
     // Copy and paste
-    pasteWithFormatting,
-    pasteWithoutFormatting,
+    pasteWithFormatting = 'pasteWithFormatting',
+    pasteWithoutFormatting = 'pasteWithoutFormatting',
 
     // Print
-    doPrint,
+    doPrint = 'doPrint',
 
     // Save
-    save
+    save = 'save'
 }
 
 interface EditorAction {

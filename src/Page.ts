@@ -231,7 +231,9 @@ class Page {
      * Check the height of the wrapper and the main page, and see if the content needs to break into a new page
      */
     public get isOverflowing(): boolean {
-        return (this.contentWrapper.offsetHeight >= (this.pageHolder.offsetHeight - this.config.margins.bottom));
+        const bottom = this.pageBottom;
+        const lastElem = this.contentWrapper.children[this.contentWrapper.children.length - 1];
+        return lastElem.getBoundingClientRect().bottom >= bottom;
     }
 
     public get currentBlock(): HTMLElement {
