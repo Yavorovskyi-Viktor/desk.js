@@ -3,7 +3,9 @@ import EditorAction, {Action} from "../types/EditorAction";
 import {KeyboardShortcut, Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
+import { createElement } from './Util';
 import DeskSnapshot from "../types/DeskSnapshot";
+import BlockData from "../types/BlockData";
 
 const defaultShortcuts: Shortcut[] = [
     {
@@ -78,8 +80,27 @@ const defaultShortcuts: Shortcut[] = [
             standard: "KeyZ"
         }
     },
-
 ];
+
+class TransitNode {
+    constructor(e: Element){
+        this.tagName = e.tagName;
+        this.attributes = e.attributes;
+    }
+
+    public createNode(){
+        return createElement(this.tagName, this.attributes);
+    }
+    public createWithChild(child: Element){
+        const nodeElem = this.createNode();
+        nodeElem.appendChild(child);
+        return nodeElem;
+    }
+
+
+    private readonly tagName: string;
+    private readonly attributes: Object;
+}
 
 export default class Engine {
     constructor(config: DeskConfig){
@@ -270,7 +291,40 @@ export default class Engine {
                 return true;
             }
             else {
-                return this.isParent(child, parent);
+                return this.isParent(child.parentElement, parent);
+            }
+        }
+    }
+
+    public getTags(e): TransitNode[]{
+        const parent = e.parentElement;
+        console.log("Getting, parent is", parent);
+        if (parent == undefined){
+            return [];
+        }
+        else {
+            if (parent.classList.contains(this.config.blockClass)){
+                return [];
+            }
+            else {
+                console.log("Built transit node");
+                return [...this.getTags(parent), new TransitNode(parent)];
+            }
+        }
+    }
+
+    public wrapTags(tags: TransitNode[]): Element{
+        console.log("Wrapping", tags);
+        if (tags.length == 0){
+            return null;
+        }
+        else {
+            const currentTag: TransitNode = tags.pop();
+            if (tags.length == 0){
+                return currentTag.createNode();
+            }
+            else {
+                return currentTag.createWithChild(this.wrapTags(tags))
             }
         }
     }
@@ -278,7 +332,7 @@ export default class Engine {
     public handleMutation(mutationsList: MutationRecord[], p: Page){
         // Determine if the page is overflowing
         if (p.isOverflowing){
-            const nextPageItems = [];
+            const nextPageItems: BlockData[] = [];
             const pageBottom  = p.pageBottom;
             console.log(`Overflowing, page bottom is ${pageBottom} nodes:`);
             for (let childIdx in p.contentWrapper.children) {
@@ -287,13 +341,13 @@ export default class Engine {
                 // Check to see if the element is fully under the page
                 if (rects.bottom >= pageBottom){
                     if (rects.top >= pageBottom){
-                        console.log("Overflow type: full");
                         let newChild = document.removeChild(child);
-                        nextPageItems.push(newChild);
+                        nextPageItems.push({content: newChild.innerHTML});
                     }
                     else{
-                        console.log("Overflow type: partial");
                         const collectedMutationText = [];
+                        const getTags = this.getTags.bind(this);
+                        const wrapTags = this.wrapTags.bind(this);
                         mutationsList.forEach(function(mutation){
                            if (mutation.type == "characterData"){
                                if (Engine.isParent(mutation.target as HTMLElement, child as HTMLElement)) {
@@ -304,22 +358,45 @@ export default class Engine {
                                        // Figure out where the text broke
                                        const oldLength = mutation.oldValue.length;
                                        const splitIndex = oldLength - 1;
-                                       // Extract the contents of the text past where it broke
-                                       const range = document.createRange();
-                                       range.setStart(mutation.target, splitIndex);
-                                       range.setEndAfter(mutation.target);
-                                       collectedMutationText.push(range.extractContents());
+                                       // Get the plain text that needs to go onto the next page
+                                       const plainText = mutation.target.textContent.slice(splitIndex);
+                                       // Get the tags and attributes that the text needs to be wrapped in
+                                       const nodeTags = getTags(mutation.target);
+                                       let textElem;
+                                       if (nodeTags.length > 0){
+                                           // Wrap the text in those tags
+                                           textElem = wrapTags(nodeTags);
+                                           textElem.innerText = plainText;
+                                       }
+                                       else {
+                                           textElem = plainText;
+                                       }
+                                       collectedMutationText.push(textElem);
                                    } else {
                                        let newChild = document.removeChild(child);
-                                       nextPageItems.push(newChild);
+                                       nextPageItems.push({content: newChild.innerHTML});
                                    }
                                }
                             }
                         });
-                        console.log(collectedMutationText);
+                        const mutationElement = createElement('div', {
+                            "class": this.config.blockClass
+                        });
+                        collectedMutationText.forEach(function(f){
+                           if (typeof(f) == "string"){
+                               mutationElement.innerText += f;
+                           }
+                           else {
+                               mutationElement.appendChild(f);
+                           }
+                        });
+                        mutationElement.normalize();
+                        nextPageItems.push({content: mutationElement.innerHTML});
                     }
                 }
             }
+            const event = new CustomEvent('overflow', {detail: nextPageItems});
+            p.contentWrapper.dispatchEvent(event);
         }
     }
 

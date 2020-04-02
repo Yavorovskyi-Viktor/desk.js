@@ -105,10 +105,6 @@ export default class Desk{
         Engine.set(currentBlock);
     }
 
-    public newPage(){
-        this.pages.push(new Page(this.config));
-        this.render();
-    }
 
     /**
      * Save the current state of the editor. If num is not specified, save all pages
@@ -213,8 +209,26 @@ export default class Desk{
         return snapshot;
     }
 
-    private breakPage(pageNum: number, nextPageContent){
 
+    private breakPage(pageNum: number, nextPageContent){
+        const newPage = new Page(this.config, { blocks: nextPageContent });
+        this.insertPageAt(pageNum, newPage);
+    }
+
+    public insertPageAt(pageNum: number, page?: Page): boolean {
+        if (this.pages.length < pageNum || pageNum <  0){
+            return false;
+        }
+        else {
+            if (this.pages.length == pageNum){
+                // Insert a page directly after the current page
+                this.pages.push(page);
+            }
+            else {
+                this.pages.splice(pageNum, 0, page);
+            }
+            this.render();
+        }
     }
 
     private onChange(e: Event, p: Page){

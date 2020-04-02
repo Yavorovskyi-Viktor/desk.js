@@ -30,7 +30,7 @@ class Page {
             this.initialBlocks = [];
         }
         else{
-            this.uid = data.uid;
+            this.uid = data.uid || uuid();
             this.initialBlocks = data.blocks || {};
         }
 
@@ -109,7 +109,7 @@ class Page {
             const initialKeys = Object.keys(this.initialBlocks);
             if (this.initialBlocks != undefined && initialKeys.length != 0){
                 for (let blockIdx of initialKeys){
-                    this.setBlock((+blockIdx), this.initialBlocks[blockIdx])
+                    this.insertBlock((+blockIdx), this.initialBlocks[blockIdx])
                 }
             }
             else{
@@ -155,7 +155,7 @@ class Page {
      *
      * @param data the block data to render
      */
-    private newBlock(data?: BlockData){
+    public newBlock(data?: BlockData){
         // If there's no content in the data, insert a zero width character, because otherwise Chrome won't put the
         // cursor into it. This will be removed by the formatting engine as soon as there are characters in the block
         if (data == undefined){
