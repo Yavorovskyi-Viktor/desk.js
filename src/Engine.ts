@@ -329,73 +329,93 @@ export default class Engine {
         }
     }
 
+    private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
+        const nextPageItems: BlockData[] = [];
+        const pageBottom  = p.pageBottom;
+        console.log(`Overflowing, page bottom is ${pageBottom} nodes:`);
+        for (let childIdx in p.contentWrapper.children) {
+            const child = p.contentWrapper.children.item((+childIdx));
+            const rects = child.getBoundingClientRect();
+            // Check to see if the element is fully under the page
+            if (rects.bottom >= pageBottom){
+                if (rects.top >= pageBottom){
+                    let newChild = document.removeChild(child);
+                    nextPageItems.push({content: newChild.innerHTML});
+                }
+                else{
+                    const collectedMutationText = [];
+                    const getTags = this.getTags.bind(this);
+                    const wrapTags = this.wrapTags.bind(this);
+                    mutationsList.forEach(function(mutation){
+                        if (mutation.type == "characterData"){
+                            if (Engine.isParent(mutation.target as HTMLElement, child as HTMLElement)) {
+                                // Collect the previous value for character data. If there was an old value, we need to
+                                // compute what to put on the new page. Otherwise, we can just put the entire paragraph
+                                // on the new page
+                                if (mutation.oldValue) {
+                                    // Figure out where the text broke
+                                    const oldLength = mutation.oldValue.length;
+                                    const splitIndex = oldLength - 1;
+                                    // Get the plain text that needs to go onto the next page
+                                    const plainText = mutation.target.textContent.slice(splitIndex);
+                                    // Get the tags and attributes that the text needs to be wrapped in
+                                    const nodeTags = getTags(mutation.target);
+                                    let textElem;
+                                    if (nodeTags.length > 0){
+                                        // Wrap the text in those tags
+                                        textElem = wrapTags(nodeTags);
+                                        textElem.innerText = plainText;
+                                    }
+                                    else {
+                                        textElem = plainText;
+                                    }
+                                    collectedMutationText.push(textElem);
+                                } else {
+                                    let newChild = document.removeChild(child);
+                                    nextPageItems.push({content: newChild.innerHTML});
+                                }
+                            }
+                        }
+                    });
+                    const mutationElement = createElement('div', {
+                        "class": this.config.blockClass
+                    });
+                    collectedMutationText.forEach(function(f){
+                        if (typeof(f) == "string"){
+                            mutationElement.innerText += f;
+                        }
+                        else {
+                            mutationElement.appendChild(f);
+                        }
+                    });
+                    mutationElement.normalize();
+                    nextPageItems.push({content: mutationElement.innerHTML});
+                }
+            }
+        }
+        const event = new CustomEvent('overflow', {detail: nextPageItems});
+        p.contentWrapper.dispatchEvent(event);
+    }
+
     public handleMutation(mutationsList: MutationRecord[], p: Page){
         // Determine if the page is overflowing
         if (p.isOverflowing){
-            const nextPageItems: BlockData[] = [];
-            const pageBottom  = p.pageBottom;
-            console.log(`Overflowing, page bottom is ${pageBottom} nodes:`);
-            for (let childIdx in p.contentWrapper.children) {
-                const child = p.contentWrapper.children.item((+childIdx));
-                const rects = child.getBoundingClientRect();
-                // Check to see if the element is fully under the page
-                if (rects.bottom >= pageBottom){
-                    if (rects.top >= pageBottom){
-                        let newChild = document.removeChild(child);
-                        nextPageItems.push({content: newChild.innerHTML});
-                    }
-                    else{
-                        const collectedMutationText = [];
-                        const getTags = this.getTags.bind(this);
-                        const wrapTags = this.wrapTags.bind(this);
-                        mutationsList.forEach(function(mutation){
-                           if (mutation.type == "characterData"){
-                               if (Engine.isParent(mutation.target as HTMLElement, child as HTMLElement)) {
-                                   // Collect the previous value for character data. If there was an old value, we need to
-                                   // compute what to put on the new page. Otherwise, we can just put the entire paragraph
-                                   // on the new page
-                                   if (mutation.oldValue) {
-                                       // Figure out where the text broke
-                                       const oldLength = mutation.oldValue.length;
-                                       const splitIndex = oldLength - 2;
-                                       // Get the plain text that needs to go onto the next page
-                                       const plainText = mutation.target.textContent.slice(splitIndex);
-                                       // Get the tags and attributes that the text needs to be wrapped in
-                                       const nodeTags = getTags(mutation.target);
-                                       let textElem;
-                                       if (nodeTags.length > 0){
-                                           // Wrap the text in those tags
-                                           textElem = wrapTags(nodeTags);
-                                           textElem.innerText = plainText;
-                                       }
-                                       else {
-                                           textElem = plainText;
-                                       }
-                                       collectedMutationText.push(textElem);
-                                   } else {
-                                       let newChild = document.removeChild(child);
-                                       nextPageItems.push({content: newChild.innerHTML});
-                                   }
-                               }
-                            }
-                        });
-                        const mutationElement = createElement('div', {
-                            "class": this.config.blockClass
-                        });
-                        collectedMutationText.forEach(function(f){
-                           if (typeof(f) == "string"){
-                               mutationElement.innerText += f;
-                           }
-                           else {
-                               mutationElement.appendChild(f);
-                           }
-                        });
-                        mutationElement.normalize();
-                        nextPageItems.push({content: mutationElement.innerHTML});
-                    }
-                }
-            }
-            const event = new CustomEvent('overflow', {detail: nextPageItems});
+            this.doOverflowCheck(mutationsList, p);
+        }
+        const wasDeleted = (
+            (p.contentWrapper.children.length == 0) ||
+            (
+                p.contentWrapper.children.length == 1 &&
+                    (!p.contentWrapper.firstChild.textContent ||
+                        (p.contentWrapper.firstChild.textContent.length <= 1)
+                    )
+            )
+        );
+        console.log(`wasDeleted is ${wasDeleted}, firstChild inner is ${p.contentWrapper.children[0].innerHTML}`);
+        // Determine if the page has just been deleted
+        if (wasDeleted){
+            const event = new CustomEvent('delete');
+            // Dispatch a page delete event
             p.contentWrapper.dispatchEvent(event);
         }
     }

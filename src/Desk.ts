@@ -70,6 +70,24 @@ export default class Desk{
         this.render();
     }
 
+    private deletePage(page: Page) {
+        const pageIdx = this.pages.findIndex((p: Page) => p.uid === page.uid);
+        console.log(`Deleting page ${pageIdx+1}`);
+        if (pageIdx === 0){
+            // Don't delete the only page in the document
+            if (page.contentWrapper.children.length === 0){
+                // If this was caused by deletion of the last block on the page, create a new one
+                page.newBlock();
+            }
+        }
+        else {
+            // Remove the page internally
+            this.pages.splice(pageIdx, 1);
+            // Remove the page from the DOM
+            this.editorHolder.removeChild(page.pageHolder);
+        }
+    }
+
     private render(){
         for (let pageIdx in this.pages){
             let pageNum = (+pageIdx)+1;
@@ -82,7 +100,10 @@ export default class Desk{
                                                                                 this.engine.onKeydown(e, page));
                 // Pass overflow events back to the page manager so we can break the page
                 page.contentWrapper.addEventListener('overflow', (e: CustomEvent) =>
-                                                                        this.breakPage(pageNum, e.detail));
+                                                                        this.breakPage(page, e.detail));
+                // Pass page deletion events to an event listener that will know if it's the first page or not
+                console.log("Registering delete");
+                page.contentWrapper.addEventListener('delete', (e: CustomEvent) => this.deletePage(page));
                 // Listen to mutations and pass them as well to the formatting engine
                 const observer = new MutationObserver((mutations) =>
                     this.engine.handleMutation(mutations, page));
@@ -210,7 +231,9 @@ export default class Desk{
     }
 
 
-    private breakPage(pageNum: number, nextPageContent){
+    private breakPage(page: Page, nextPageContent){
+        const pageIdx: number = this.pages.findIndex((p: Page) => p.uid === page.uid);
+        const pageNum = pageIdx + 1;
         const newPage = new Page(this.config, { blocks: nextPageContent });
         this.onPage = pageNum + 1;
         // Check to see if a page already exists with the page number following pageNum

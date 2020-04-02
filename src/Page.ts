@@ -253,7 +253,7 @@ class Page {
         return this.pageHolder.getBoundingClientRect().bottom - this.config.margins.bottom;
     }
 
-    private pageHolder: HTMLElement;
+    public pageHolder: HTMLElement;
     public contentWrapper: HTMLElement;
     public currentBlockIdx: number;
     public uid: string;
