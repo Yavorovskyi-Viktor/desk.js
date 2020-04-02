@@ -212,7 +212,19 @@ export default class Desk{
 
     private breakPage(pageNum: number, nextPageContent){
         const newPage = new Page(this.config, { blocks: nextPageContent });
-        this.insertPageAt(pageNum, newPage);
+        this.onPage = pageNum + 1;
+        // Check to see if a page already exists with the page number following pageNum
+        if (this.pages.length > pageNum){
+            // If it does, push the pending page content onto that page
+            const nextPage = this.pages[pageNum];
+            for (let block of nextPageContent){
+                nextPage.insertBlock(0, block);
+            }
+        }
+        else {
+            // If not, create a new page
+            this.insertPageAt(pageNum, newPage);
+        }
     }
 
     public insertPageAt(pageNum: number, page?: Page): boolean {

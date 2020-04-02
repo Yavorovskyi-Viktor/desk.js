@@ -357,7 +357,7 @@ export default class Engine {
                                    if (mutation.oldValue) {
                                        // Figure out where the text broke
                                        const oldLength = mutation.oldValue.length;
-                                       const splitIndex = oldLength - 1;
+                                       const splitIndex = oldLength - 2;
                                        // Get the plain text that needs to go onto the next page
                                        const plainText = mutation.target.textContent.slice(splitIndex);
                                        // Get the tags and attributes that the text needs to be wrapped in

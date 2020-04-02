@@ -173,7 +173,7 @@ class Page {
      * @param index The index to insert the block at
      * @param data The block data
      */
-    private insertBlock(index: number, data?: BlockData){
+    public insertBlock(index: number, data?: BlockData){
         // Render the block into an HTML element
         const block = this.renderBlock(data);
         // Get the current number of children on the page. Note that this is a length, so 1 more than the index
@@ -182,9 +182,9 @@ class Page {
         if (index === numChildren){
             this.newBlock(data);
         }
-        // If the index is less than or equal to the current number of block children, modify an existing block
+        // If the index is less than or equal to the current number of block children, shift blocks to create this new block
         else if (index < numChildren){
-            this.setBlock(index, data);
+            this.contentWrapper.insertBefore(this.contentWrapper.children[index], this.renderBlock(data));
         }
         // Otherwise, if the index hasn't been reached yet, create empty new blocks until we've either
         // reached the end of the page (index was invalid), or until the index is the next child
