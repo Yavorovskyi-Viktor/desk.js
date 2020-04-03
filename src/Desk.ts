@@ -283,7 +283,6 @@ export default class Desk{
     }
 
     private unwrapChange(e: CustomEvent){
-        console.log("Pages", this.pages);
         const pageNum = this.pages.findIndex((p: Page) => p.uid === e.detail.page.uid) + 1;
         this.onChange([{pageNum: pageNum, blocks: e.detail.blocks}]);
     }
@@ -292,11 +291,9 @@ export default class Desk{
         let snapshot;
         // Check if we should handle all pages
         if (this.config.saveOnChange){
-            console.log("Save on changes building full");
             snapshot = this.save();
         }
         else{
-            console.log("Building partial");
             // TODO: handle page deletion
             const pageSnapshots = {};
             for (let pageChanged of pagesChanged){
