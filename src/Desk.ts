@@ -248,6 +248,8 @@ export default class Desk{
             // If not, create a new page
             this.insertPageAt(pageNum, newPage);
         }
+        // Focus on the new page
+        this.currentPage.focus();
     }
 
     public insertPageAt(pageNum: number, page?: Page): boolean {

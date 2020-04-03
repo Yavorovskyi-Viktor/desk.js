@@ -266,14 +266,6 @@ export default class Engine {
             e.preventDefault();
             return;
         }
-        // Prevent the user from deleting the initial block
-        if (e.key == "Backspace" && p.contentWrapper.childNodes.length == 1){
-            const firstChild = p.contentWrapper.firstChild as HTMLElement;
-            if (firstChild.innerText.length == 0 || (firstChild.innerText.length == 1 &&
-                    firstChild.innerText == "&#8203;")){
-                e.preventDefault();
-            }
-        }
     }
 
     /**
@@ -298,7 +290,6 @@ export default class Engine {
 
     public getTags(e): TransitNode[]{
         const parent = e.parentElement;
-        console.log("Getting, parent is", parent);
         if (parent == undefined){
             return [];
         }
@@ -307,14 +298,12 @@ export default class Engine {
                 return [];
             }
             else {
-                console.log("Built transit node");
                 return [...this.getTags(parent), new TransitNode(parent)];
             }
         }
     }
 
     public wrapTags(tags: TransitNode[]): Element{
-        console.log("Wrapping", tags);
         if (tags.length == 0){
             return null;
         }
@@ -355,9 +344,16 @@ export default class Engine {
                                 if (mutation.oldValue) {
                                     // Figure out where the text broke
                                     const oldLength = mutation.oldValue.length;
-                                    const splitIndex = oldLength - 1;
+                                    let splitIndex = oldLength - 1;
+                                    // Keep going back until we hit the beginning of the page and
+                                    while (splitIndex > 0 && mutation.target.textContent[splitIndex] != " "){
+                                        splitIndex--;
+                                    }
+                                    const range = document.createRange();
+                                    range.setStart(mutation.target, splitIndex);
+                                    range.setEndAfter(mutation.target);
                                     // Get the plain text that needs to go onto the next page
-                                    const plainText = mutation.target.textContent.slice(splitIndex);
+                                    const plainText = range.extractContents().textContent;
                                     // Get the tags and attributes that the text needs to be wrapped in
                                     const nodeTags = getTags(mutation.target);
                                     let textElem;
@@ -411,7 +407,6 @@ export default class Engine {
                     )
             )
         );
-        console.log(`wasDeleted is ${wasDeleted}, firstChild inner is ${p.contentWrapper.children[0].innerHTML}`);
         // Determine if the page has just been deleted
         if (wasDeleted){
             const event = new CustomEvent('delete');

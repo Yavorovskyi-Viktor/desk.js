@@ -33,7 +33,7 @@ class Page {
             this.uid = data.uid || uuid();
             this.initialBlocks = data.blocks || {};
         }
-
+        this.shouldOverflow = false;
     }
 
     /**
@@ -209,10 +209,22 @@ class Page {
     }
 
     public focus(){
-        if (this.currentBlockIdx != undefined){
-            Engine.set(this.currentBlock);
-        }
         this.contentWrapper.focus();
+        if (this.currentBlockIdx != undefined){
+            const currentBlock = this.currentBlock;
+            if (currentBlock.children.length > 0){
+                const setChild = this.currentBlock.children[this.currentBlock.children.length - 1] as HTMLElement;
+                const range = document.createRange();
+                range.selectNodeContents(setChild);
+                range.collapse(false);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+            else {
+                Engine.set(this.currentBlock);
+            }
+        }
     }
 
     public getBlock(i: number): HTMLElement{
@@ -257,6 +269,7 @@ class Page {
     public contentWrapper: HTMLElement;
     public currentBlockIdx: number;
     public uid: string;
+    public shouldOverflow: boolean;
     private config: DeskConfig;
     private initialBlocks: { [index: number]: BlockData };
 }
