@@ -102,8 +102,10 @@ export default class Desk{
                 page.contentWrapper.addEventListener('overflow', (e: CustomEvent) =>
                                                                         this.breakPage(page, e.detail));
                 // Pass page deletion events to an event listener that will know if it's the first page or not
-                console.log("Registering delete");
                 page.contentWrapper.addEventListener('delete', (e: CustomEvent) => this.deletePage(page));
+                // Pass paste events to the text formatting engine
+                page.contentWrapper.addEventListener('paste', (e: ClipboardEvent) =>
+                                                                                    this.engine.onPaste(e, page));
                 // Listen to mutations and pass them as well to the formatting engine
                 const observer = new MutationObserver((mutations) =>
                     this.engine.handleMutation(mutations, page));
@@ -221,9 +223,12 @@ export default class Desk{
             });
         }
         else{
-            pageObj.blocks.forEach(function(b: HTMLElement, i: number){
-               blocks[i] = Desk.serializeBlock(b);
-            });
+            for (let blockG in pageObj.blocks){
+                const i = (+blockG);
+                if (!isNaN(i)){
+                    blocks[i] = Desk.serializeBlock(pageObj.blocks[blockG]);
+                }
+            }
         }
         const snapshot: PageData = {uid: pageObj.uid, blocks: blocks};
         // Return the resulting snapshot

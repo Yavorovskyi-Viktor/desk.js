@@ -184,7 +184,8 @@ class Page {
         }
         // If the index is less than or equal to the current number of block children, shift blocks to create this new block
         else if (index < numChildren){
-            this.contentWrapper.insertBefore(this.contentWrapper.children[index], this.renderBlock(data));
+            const prevChild = this.contentWrapper.children[index];
+            prevChild.insertAdjacentElement('beforebegin', this.renderBlock(data));
         }
         // Otherwise, if the index hasn't been reached yet, create empty new blocks until we've either
         // reached the end of the page (index was invalid), or until the index is the next child

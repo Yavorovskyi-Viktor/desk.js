@@ -5,6 +5,7 @@ module.exports = {
     entry: {
         'desk': './src/Desk.ts'
     },
+    devtool: "source-map",
     module: {
         rules: [
             {

@@ -275,7 +275,7 @@ export default class Engine {
      */
     public static isParent(child: HTMLElement, parent: HTMLElement): boolean{
         // Stop when we hit the page wrapper
-        if (child.parentElement.classList.contains("page-wrapper")){
+        if (child.parentElement.classList != undefined && child.parentElement.classList.contains("page-wrapper")){
             return false;
         }
         else {
@@ -328,7 +328,7 @@ export default class Engine {
             // Check to see if the element is fully under the page
             if (rects.bottom >= pageBottom){
                 if (rects.top >= pageBottom){
-                    let newChild = document.removeChild(child);
+                    let newChild = p.contentWrapper.removeChild(child);
                     nextPageItems.push({content: newChild.innerHTML});
                 }
                 else{
@@ -373,19 +373,26 @@ export default class Engine {
                             }
                         }
                     });
-                    const mutationElement = createElement('div', {
-                        "class": this.config.blockClass
-                    });
-                    collectedMutationText.forEach(function(f){
-                        if (typeof(f) == "string"){
-                            mutationElement.innerText += f;
-                        }
-                        else {
-                            mutationElement.appendChild(f);
-                        }
-                    });
-                    mutationElement.normalize();
-                    nextPageItems.push({content: mutationElement.innerHTML});
+                    if (collectedMutationText.length > 0){
+                        const mutationElement = createElement('div', {
+                            "class": this.config.blockClass
+                        });
+                        collectedMutationText.forEach(function(f){
+                            if (typeof(f) == "string"){
+                                mutationElement.innerText += f;
+                            }
+                            else {
+                                mutationElement.appendChild(f);
+                            }
+                        });
+                        mutationElement.normalize();
+                        nextPageItems.push({content: mutationElement.innerHTML});
+                    }
+                    else {
+                        // If we can't get the text mutation, just push the whole block onto the next page
+                        let newChild = p.contentWrapper.removeChild(child);
+                        nextPageItems.push({content: newChild.innerHTML});
+                    }
                 }
             }
         }
@@ -393,25 +400,29 @@ export default class Engine {
         p.contentWrapper.dispatchEvent(event);
     }
 
+    public onPaste(e: ClipboardEvent, p: Page){
+        // A modified answer of Nico Burns's excellent SO answer on the subject,
+        // https://stackoverflow.com/a/6804718
+        const types = e.clipboardData.types;
+        // Rewrite HTML pastes
+        if (((types instanceof DOMStringList) && types.contains("text/html")) || (types.indexOf && types.indexOf('text/html') !== -1)) {
+
+            // Extract data and pass it to callback
+            const pastedData = e.clipboardData.getData('text/html');
+            console.log("Got paste", pastedData);
+
+            // Stop the data from actually being pasted
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+        }
+    }
+
+
     public handleMutation(mutationsList: MutationRecord[], p: Page){
         // Determine if the page is overflowing
         if (p.isOverflowing){
             this.doOverflowCheck(mutationsList, p);
-        }
-        const wasDeleted = (
-            (p.contentWrapper.children.length == 0) ||
-            (
-                p.contentWrapper.children.length == 1 &&
-                    (!p.contentWrapper.firstChild.textContent ||
-                        (p.contentWrapper.firstChild.textContent.length <= 1)
-                    )
-            )
-        );
-        // Determine if the page has just been deleted
-        if (wasDeleted){
-            const event = new CustomEvent('delete');
-            // Dispatch a page delete event
-            p.contentWrapper.dispatchEvent(event);
         }
     }
 
