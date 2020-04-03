@@ -31,6 +31,9 @@ interface DeskConfig{
     // Called whenever a block is modified, created, or destroyed in the document
     onChange?(snapshot: DeskSnapshot): void;
 
+    // Do you want to receive the entire document on change, or just the pages and blocks that have changed? Default is false
+    saveOnChange?: boolean;
+
     // The included Desk editing shortcuts. Override this to eliminate common shortcut
     baseShortcuts: Shortcut[]
 

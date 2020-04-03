@@ -5,6 +5,7 @@ import Page from './Page';
 import Engine, { defaultShortcuts } from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
 import BlockData from "../types/BlockData";
+import PageChange from "../types/PageChange";
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -23,6 +24,7 @@ const defaultConfig: DeskConfig = {
     baseShortcuts: defaultShortcuts,
     extraShortcuts: [],
     blockClass: "desk-block",
+    saveOnChange: false
 };
 
 export default class Desk{
@@ -43,6 +45,7 @@ export default class Desk{
             config.baseShortcuts = config.baseShortcuts || defaultConfig.baseShortcuts;
             config.extraShortcuts = config.extraShortcuts || defaultConfig.extraShortcuts;
             config.blockClass = config.blockClass || defaultConfig.blockClass;
+            config.saveOnChange = config.saveOnChange || defaultConfig.saveOnChange;
         }
         this.config = config;
         // Make sure that the holder element exists on the page
@@ -89,6 +92,7 @@ export default class Desk{
     }
 
     private render(){
+        const unwrapChange = this.unwrapChange.bind(this);
         for (let pageIdx in this.pages){
             let pageNum = (+pageIdx)+1;
             const page = this.pages[pageIdx];
@@ -106,6 +110,8 @@ export default class Desk{
                 // Pass paste events to the text formatting engine
                 page.contentWrapper.addEventListener('paste', (e: ClipboardEvent) =>
                                                                                     this.engine.onPaste(e, page));
+                // Listen to change events in onchange
+                page.contentWrapper.addEventListener('change', unwrapChange);
                 // Listen to mutations and pass them as well to the formatting engine
                 const observer = new MutationObserver((mutations) =>
                     this.engine.handleMutation(mutations, page));
@@ -255,6 +261,7 @@ export default class Desk{
         }
         // Focus on the new page
         this.currentPage.focus();
+        // Dispatch a change snapshot that includes
     }
 
     public insertPageAt(pageNum: number, page?: Page): boolean {
@@ -273,9 +280,32 @@ export default class Desk{
         }
     }
 
-    private onChange(e: Event, p: Page){
-        console.log("Firing change");
-        const pageNum = this.pages.indexOf(p);
+    private unwrapChange(e: CustomEvent){
+        console.log("Pages", this.pages);
+        const pageNum = this.pages.findIndex((p: Page) => p.uid === e.detail.page.uid) + 1;
+        this.onChange([{pageNum: pageNum, blocks: e.detail.blocks}]);
+    }
+
+    private onChange(pagesChanged: PageChange[]){
+        let snapshot;
+        // Check if we should handle all pages
+        if (this.config.saveOnChange){
+            console.log("Save on changes building full");
+            snapshot = this.save();
+        }
+        else{
+            console.log("Building partial");
+            // TODO: handle page deletion
+            const pageSnapshots = {};
+            for (let pageChanged of pagesChanged){
+                pageSnapshots[pageChanged.pageNum] = this.buildSnapshot(pageChanged.pageNum, pageChanged.blocks);
+            }
+            snapshot = {pages: pageSnapshots};
+        }
+
+        if (this.config.onChange != undefined) {
+            this.config.onChange(snapshot);
+        }
     }
 
     public onPage: number;

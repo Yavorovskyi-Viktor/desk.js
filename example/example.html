@@ -8,24 +8,23 @@
 <script src="static/jquery.min.js"></script>
 <script src="static/bootstrap.bundle.min.js"></script>
 <link rel="stylesheet" href="static/bootstrap.min.css" />
-
+<link rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/solarized-dark.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
 <body>
     <div class="container container-fluid">
         <br>
         <div class="row">
-            <div class="col-md-10 mx-auto">
+            <div class="col-md-8">
+                <h2>Editor</h2>
                 <!-- The element that the editor will be rendered into -->
                 <div id="desk-editor"></div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-10 mx-auto">
-                <div class="row">
-                    <h2>Clean JSON output</h2>
-                </div>
-                <div class="row">
+            <div class="col-md-4">
+                <h2>Output</h2>
+                <div id="desk-output">
                     <pre>
-                        <code id="editor-output">
+                        <code class="language-json" id="output-code">
 
                         </code>
                     </pre>
@@ -41,14 +40,18 @@
 </body>
 <script src="../dist/desk.js"></script>
 <script>
+    const outputArea = document.getElementById("output-code");
 
     function onDeskChange(e){
         console.log("Got desk change ", e);
+        outputArea.innerHTML = JSON.stringify(e, null, " ");
+        hljs.highlightBlock(outputArea);
     }
 
     let d = new Desk({
         holder: "desk-editor",
-        onChange: onDeskChange
+        onChange: onDeskChange,
+        saveOnChange: true
     });
 
     function save(){

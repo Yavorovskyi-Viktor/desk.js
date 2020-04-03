@@ -318,6 +318,19 @@ export default class Engine {
         }
     }
 
+    public findBlock(e: HTMLElement){
+        if (e.classList != undefined && e.classList.contains(this.config.blockClass)) {
+            return e;
+        }
+        else if (e.parentElement == undefined) {
+            console.error("Couldn't find a parent element for block, malformed document", e);
+            return null;
+        }
+        else {
+            return this.findBlock(e.parentElement);
+        }
+    }
+
     private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
         const nextPageItems: BlockData[] = [];
         const pageBottom  = p.pageBottom;
@@ -423,6 +436,20 @@ export default class Engine {
         // Determine if the page is overflowing
         if (p.isOverflowing){
             this.doOverflowCheck(mutationsList, p);
+            return;
+        }
+        // Dispatch change events
+        const foundBlocks = new Set();
+        const children = Array.from(p.contentWrapper.children);
+        for (let mutation of mutationsList){
+            const target = mutation.target as HTMLElement;
+            foundBlocks.add(children.indexOf(this.findBlock(target)));
+        }
+        if (foundBlocks.size != 0){
+            p.contentWrapper.dispatchEvent(new CustomEvent('change', {detail: {
+                    page: p,
+                    blocks: Array.from(foundBlocks)
+                }}));
         }
     }
 
