@@ -274,8 +274,11 @@ export default class Engine {
      * @param parent The parent element in question
      */
     public static isParent(child: HTMLElement, parent: HTMLElement): boolean{
+        if (child.parentElement == undefined){
+            return false;
+        }
         // Stop when we hit the page wrapper
-        if (child.parentElement.classList != undefined && child.parentElement.classList.contains("page-wrapper")){
+        else if (child.parentElement.classList != undefined && child.parentElement.classList.contains("page-wrapper")){
             return false;
         }
         else {
@@ -322,9 +325,13 @@ export default class Engine {
         if (e.classList != undefined && e.classList.contains(this.config.blockClass)) {
             return e;
         }
+        else if (e.classList != undefined && e.classList.contains("page-wrapper") || (e.id == this.config.holder)){
+            // If we've hit the wrapper or the holder, this isn't a block level element
+            return false;
+        }
         else if (e.parentElement == undefined) {
             console.error("Couldn't find a parent element for block, malformed document", e);
-            return null;
+            return false;
         }
         else {
             return this.findBlock(e.parentElement);
@@ -443,7 +450,10 @@ export default class Engine {
         const children = Array.from(p.contentWrapper.children);
         for (let mutation of mutationsList){
             const target = mutation.target as HTMLElement;
-            foundBlocks.add(children.indexOf(this.findBlock(target)));
+            const blockParent = this.findBlock(target);
+            if (blockParent){
+                foundBlocks.add(children.indexOf(blockParent));
+            }
         }
         if (foundBlocks.size != 0){
             p.contentWrapper.dispatchEvent(new CustomEvent('change', {detail: {

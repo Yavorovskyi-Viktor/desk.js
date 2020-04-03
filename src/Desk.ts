@@ -59,6 +59,7 @@ export default class Desk{
         // Instantiate the provided pages
         for (const page of config.pages){
             this.pages.push(new Page(this.config, page));
+            this.onPage = this.config.onPage;
         }
 
         // If there are no current pages, create the first page
@@ -261,7 +262,8 @@ export default class Desk{
         }
         // Focus on the new page
         this.currentPage.focus();
-        // Dispatch a change snapshot that includes
+        // Dispatch a change snapshot that includes the pages that changed
+        this.onChange([{pageNum: pageNum}, {pageNum: pageNum - 1}]);
     }
 
     public insertPageAt(pageNum: number, page?: Page): boolean {

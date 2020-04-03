@@ -15,12 +15,12 @@
     <div class="container container-fluid">
         <br>
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-md-9">
                 <h2>Editor</h2>
                 <!-- The element that the editor will be rendered into -->
                 <div id="desk-editor"></div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <h2>Output</h2>
                 <div id="desk-output">
                     <pre>
@@ -44,15 +44,29 @@
 
     function onDeskChange(e){
         console.log("Got desk change ", e);
-        outputArea.innerHTML = JSON.stringify(e, null, " ");
+        outputArea.innerText = JSON.stringify(e, null, " ");
         hljs.highlightBlock(outputArea);
     }
 
     let d = new Desk({
         holder: "desk-editor",
         onChange: onDeskChange,
-        saveOnChange: true
+        saveOnChange: true,
+        pages: [
+            {
+                uid: "011c64d4-ba2d-179a-4043-8be2fce484f3",
+                blocks: {
+                    0: {content: "<h1>This is desk</h1>"},
+                    1: {content: "<br>"},
+                    2: {content: "<h2>A <i>flexible</i>, <b>powerful</b>, <u>open source</u> Word Processor</h2>"},
+                    3: {content: "<b>Document driven on the surface, API driven underneath<b>"}
+                }
+            }
+        ]
     });
+
+    outputArea.innerText = JSON.stringify(d.save(), null, " ");
+    hljs.highlightBlock(outputArea);
 
     function save(){
         console.log("Saving");
