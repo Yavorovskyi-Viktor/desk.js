@@ -50,7 +50,7 @@
         outputArea.innerText = JSON.stringify(e, null, " ");
         hljs.highlightBlock(outputArea);
     }
-
+    let i = 0;
     let d = new Desk({
         holder: "desk-editor",
         onChange: onDeskChange,
@@ -65,7 +65,11 @@
                     3: {content: "<b>Document driven on the surface, API driven underneath<b>"}
                 }
             }
-        ]
+        ],
+        genUID: () => {
+            i++;
+            return i;
+        }
     });
 
     outputArea.innerText = JSON.stringify(d.save(), null, " ");

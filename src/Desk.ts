@@ -286,6 +286,35 @@ export default class Desk{
         }
     }
 
+    public findPageIdx(pageId: string): number | null {
+        const foundIndex = this.pages.findIndex((p: Page) => p.uid === pageId);
+        return (foundIndex >= 0 && foundIndex) || null;
+    }
+
+    public findPageNum(pageId: string): number | null {
+        const foundPageIdx = this.findPageIdx(pageId);
+        return (foundPageIdx && foundPageIdx + 1) || foundPageIdx;
+    }
+
+    public setPageContent(pageId: string, blocks: Object){
+        const foundPageIdx = this.findPageIdx(pageId);
+        if (foundPageIdx){
+            const pageObj = this.pages[foundPageIdx];
+            // Clear the blocks currently on the page
+            pageObj.contentWrapper.textContent = '';
+            // Insert each block onto the page
+            for (let blockK of Object.keys(blocks)){
+                const block: BlockData = blocks[blockK];
+                pageObj.insertBlock((+blockK), block);
+            }
+        }
+        else {
+            console.error(`Couldn't find page with ID ${pageId}`);
+            return null;
+        }
+    }
+
+
     private unwrapChange(e: CustomEvent){
         const pageNum = this.pages.findIndex((p: Page) => p.uid === e.detail.page.uid) + 1;
         this.onChange([{pageNum: pageNum, blocks: e.detail.blocks}]);
