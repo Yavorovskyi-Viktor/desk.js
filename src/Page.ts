@@ -5,8 +5,6 @@ import * as Util from './Util';
 // External imports
 import Engine from "./Engine";
 import BlockData from "../types/BlockData";
-import {uuid} from "./Util";
-
 
 // The class name for a page in the DOM
 const pageClass = "desk-page";
@@ -26,11 +24,11 @@ class Page {
         this.config = config;
         // If the page wasn't passed a UID, generate a v4 UUID
         if (data == undefined){
-            this.uid = uuid();
+            this.uid = config.genUID();
             this.initialBlocks = [];
         }
         else{
-            this.uid = data.uid || uuid();
+            this.uid = data.uid || config.genUID();
             this.initialBlocks = data.blocks || {};
         }
         this.shouldOverflow = false;

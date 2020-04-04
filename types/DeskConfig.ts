@@ -31,6 +31,9 @@ interface DeskConfig{
     // Called whenever a block is modified, created, or destroyed in the document
     onChange?(snapshot: DeskSnapshot): void;
 
+    // Optionally supply a custom function to generate page UIDs
+    genUID(): string;
+
     // Do you want to receive the entire document on change, or just the pages and blocks that have changed? Default is false
     saveOnChange?: boolean;
 

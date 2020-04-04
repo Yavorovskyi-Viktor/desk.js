@@ -6,6 +6,8 @@ import Engine, { defaultShortcuts } from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
 import BlockData from "../types/BlockData";
 import PageChange from "../types/PageChange";
+import EditorAction from "../types/EditorAction";
+import { uuid } from './Util';
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -24,7 +26,8 @@ const defaultConfig: DeskConfig = {
     baseShortcuts: defaultShortcuts,
     extraShortcuts: [],
     blockClass: "desk-block",
-    saveOnChange: false
+    saveOnChange: false,
+    genUID: uuid
 };
 
 export default class Desk{
@@ -46,6 +49,7 @@ export default class Desk{
             config.extraShortcuts = config.extraShortcuts || defaultConfig.extraShortcuts;
             config.blockClass = config.blockClass || defaultConfig.blockClass;
             config.saveOnChange = config.saveOnChange || defaultConfig.saveOnChange;
+            config.genUID = config.genUID || defaultConfig.genUID;
         }
         this.config = config;
         // Make sure that the holder element exists on the page
@@ -305,6 +309,14 @@ export default class Desk{
         if (this.config.onChange != undefined) {
             this.config.onChange(snapshot);
         }
+    }
+
+    /**
+     * Execute an action in the text formatting engine
+     * @param action
+     */
+    public executeAction(action: EditorAction){
+        Engine.executeAction(action);
     }
 
     public onPage: number;

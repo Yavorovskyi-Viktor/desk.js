@@ -35,6 +35,9 @@
             <div class="col-md-4 mx-auto">
                 <button onclick="save()" class="btn btn-primary">Save</button>
             </div>
+            <div class="col-md-4 mx-auto">
+                <button onclick="bold()" class="btn btn-primary">Bold</button>
+            </div>
         </div>
     </div>
 </body>
@@ -72,6 +75,10 @@
         console.log("Saving");
         let savedData = d.save();
         console.log(savedData);
+    }
+
+    function bold(){
+        d.executeAction({action: 'makeBold', detail: {}})
     }
 
 

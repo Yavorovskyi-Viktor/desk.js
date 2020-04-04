@@ -164,7 +164,7 @@ export default class Engine {
      *
      * @param action the action to apply
      */
-    public executeAction(action: EditorAction){
+    public static executeAction(action: EditorAction){
         switch(action.action) {
             case (Action.makeBold):
                 document.execCommand('bold');
@@ -262,7 +262,7 @@ export default class Engine {
         const shortcut = this.matchShortcut(e);
         if (shortcut){
             console.log(`Triggering shortcut ${shortcut.name}`);
-            this.executeAction({action: shortcut.action, detail: {}});
+            Engine.executeAction({action: shortcut.action, detail: {}});
             e.preventDefault();
             return;
         }
