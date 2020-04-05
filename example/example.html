@@ -45,16 +45,24 @@
 <script>
     const outputArea = document.getElementById("output-code");
 
+    let writes = 0;
+    let bytes = 0;
+    let startDate = Date.now();
     function onDeskChange(e){
+        let endDate = Date.now();
+        writes++;
+        bytes += JSON.stringify(e).length;
+        let timeTaken = (endDate - startDate) / 1000;
+        console.log(`${timeTaken} seconds, ${writes} writes, ${bytes} bytes`);
         console.log("Got desk change ", e);
         outputArea.innerText = JSON.stringify(e, null, " ");
         hljs.highlightBlock(outputArea);
+
     }
-    let i = 0;
     let d = new Desk({
         holder: "desk-editor",
         onChange: onDeskChange,
-        saveOnChange: true,
+        saveOnChange: false,
         pages: [
             {
                 uid: "011c64d4-ba2d-179a-4043-8be2fce484f3",
@@ -66,10 +74,7 @@
                 }
             }
         ],
-        genUID: () => {
-            i++;
-            return i;
-        }
+        debounceChanges: 1000
     });
 
     outputArea.innerText = JSON.stringify(d.save(), null, " ");

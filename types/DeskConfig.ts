@@ -46,6 +46,10 @@ interface DeskConfig{
     // The classname of editor blocks
     blockClass: string;
 
+    // Whether or not to debounce type events. Set to a number if they should be debounced, or false if not. Default
+    // is 500 ms
+    debounceChanges: number | false;
+
 }
 
 export default DeskConfig;

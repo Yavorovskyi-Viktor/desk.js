@@ -26,4 +26,27 @@ function uuid() {
         s4() + '-' + s4() + s4() + s4();
 }
 
-export { createElement, uuid };
+/**
+ * Loadashes debounce, taken out of the library because I don't need all of lodash
+ *
+ * Taken from https://davidwalsh.name/javascript-debounce-function / Lodash
+ * @param func
+ * @param wait
+ * @param immediate
+ */
+function debounce(func, wait, immediate) {
+    let timeout;
+    return function() {
+        let context = this, args = arguments;
+        let later = function() {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        };
+        let callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    };
+}
+
+export { createElement, uuid, debounce };

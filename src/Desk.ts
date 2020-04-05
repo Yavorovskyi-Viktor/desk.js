@@ -7,7 +7,7 @@ import DeskSnapshot from "../types/DeskSnapshot";
 import BlockData from "../types/BlockData";
 import PageChange from "../types/PageChange";
 import EditorAction from "../types/EditorAction";
-import { uuid } from './Util';
+import { uuid, debounce } from './Util';
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -27,7 +27,8 @@ const defaultConfig: DeskConfig = {
     extraShortcuts: [],
     blockClass: "desk-block",
     saveOnChange: false,
-    genUID: uuid
+    genUID: uuid,
+    debounceChanges: 500
 };
 
 export default class Desk{
@@ -50,6 +51,7 @@ export default class Desk{
             config.blockClass = config.blockClass || defaultConfig.blockClass;
             config.saveOnChange = config.saveOnChange || defaultConfig.saveOnChange;
             config.genUID = config.genUID || defaultConfig.genUID;
+            config.debounceChanges = config.debounceChanges || defaultConfig.debounceChanges;
         }
         this.config = config;
         // Make sure that the holder element exists on the page
@@ -97,7 +99,15 @@ export default class Desk{
     }
 
     private render(){
-        const unwrapChange = this.unwrapChange.bind(this);
+        // Debounce change events so they're not overwhelming a listener
+        let unwrapChange;
+        // TODO: add custom debouncer with awareness of what block is being edited, so we can rebounce new blocks
+        if (this.config.debounceChanges) {
+            unwrapChange = debounce(this.unwrapChange.bind(this), this.config.debounceChanges, false);
+        }
+        else {
+            unwrapChange = this.unwrapChange.bind(this);
+        }
         for (let pageIdx in this.pages){
             let pageNum = (+pageIdx)+1;
             const page = this.pages[pageIdx];
