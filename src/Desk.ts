@@ -288,17 +288,27 @@ export default class Desk{
 
     public findPageIdx(pageId: string): number | null {
         const foundIndex = this.pages.findIndex((p: Page) => p.uid === pageId);
-        return (foundIndex >= 0 && foundIndex) || null;
+        if (foundIndex >= 0){
+            return foundIndex;
+        }
+        else {
+            return null;
+        }
     }
 
     public findPageNum(pageId: string): number | null {
         const foundPageIdx = this.findPageIdx(pageId);
-        return (foundPageIdx && foundPageIdx + 1) || foundPageIdx;
+        if (foundPageIdx){
+            return foundPageIdx + 1;
+        }
+        else {
+            return null;
+        }
     }
 
     public setPageContent(pageId: string, blocks: Object){
         const foundPageIdx = this.findPageIdx(pageId);
-        if (foundPageIdx){
+        if (foundPageIdx != null){
             const pageObj = this.pages[foundPageIdx];
             // Clear the blocks currently on the page
             pageObj.contentWrapper.textContent = '';
