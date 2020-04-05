@@ -448,7 +448,11 @@ export default class Engine {
         // Dispatch change events
         const foundBlocks = new Set();
         const children = Array.from(p.contentWrapper.children);
+        let priorityEvent = false;
         for (let mutation of mutationsList){
+            if (mutation.type != "characterData") {
+                priorityEvent = true;
+            }
             const target = mutation.target as HTMLElement;
             const blockParent = this.findBlock(target);
             if (blockParent){
@@ -456,7 +460,8 @@ export default class Engine {
             }
         }
         if (foundBlocks.size != 0){
-            p.contentWrapper.dispatchEvent(new CustomEvent('change', {detail: {
+            const eventType = priorityEvent ? "prioritychange" : "change";
+            p.contentWrapper.dispatchEvent(new CustomEvent(eventType, {detail: {
                     page: p,
                     blocks: Array.from(foundBlocks)
                 }}));

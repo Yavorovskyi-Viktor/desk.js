@@ -101,9 +101,10 @@ export default class Desk{
     private render(){
         // Debounce change events so they're not overwhelming a listener
         let unwrapChange;
+        const boundChange = this.unwrapChange.bind(this);
         // TODO: add custom debouncer with awareness of what block is being edited, so we can rebounce new blocks
         if (this.config.debounceChanges) {
-            unwrapChange = debounce(this.unwrapChange.bind(this), this.config.debounceChanges, false);
+            unwrapChange = debounce(boundChange, this.config.debounceChanges, false);
         }
         else {
             unwrapChange = this.unwrapChange.bind(this);
@@ -127,6 +128,8 @@ export default class Desk{
                                                                                     this.engine.onPaste(e, page));
                 // Listen to change events in onchange
                 page.contentWrapper.addEventListener('change', unwrapChange);
+                // Process priority events immediately, without debounce
+                page.contentWrapper.addEventListener('prioritychange', boundChange);
                 // Listen to mutations and pass them as well to the formatting engine
                 const observer = new MutationObserver((mutations) =>
                     this.engine.handleMutation(mutations, page));
@@ -317,6 +320,14 @@ export default class Desk{
     }
 
     public setPageContent(pageId: string, blocks: Object){
+        // If the blocks are empty, set a single zero width block
+        if (Object.keys(blocks).length == 0){
+            blocks = {
+                0: {
+                    content: "&#8203;"
+                }
+            }
+        };
         const foundPageIdx = this.findPageIdx(pageId);
         if (foundPageIdx != null){
             const pageObj = this.pages[foundPageIdx];

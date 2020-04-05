@@ -244,8 +244,14 @@ class Page {
     public get isOverflowing(): boolean {
         const bottom = this.pageBottom;
         const lastElem = this.contentWrapper.children[this.contentWrapper.children.length - 1];
-        return lastElem.getBoundingClientRect().bottom >= bottom;
+        if (lastElem == undefined){
+            return false;
+        }
+        else {
+            return lastElem.getBoundingClientRect().bottom >= bottom;
+        }
     }
+
 
     public get currentBlock(): HTMLElement {
         if (this.currentBlockIdx == undefined){
