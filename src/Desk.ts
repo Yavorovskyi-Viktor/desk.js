@@ -314,6 +314,22 @@ export default class Desk{
         }
     }
 
+    public insertNewPageAt(index: number, page: PageData){
+        const newPage = new Page(this.config, page);
+        this.insertPageAt(index+1, newPage);
+    }
+
+    public insertPageBefore(beforePageId: string, page: PageData){
+        const beforePage = this.findPageIdx(beforePageId);
+        this.insertNewPageAt(beforePage, page);
+
+    }
+
+    public insertPageAfter(afterPageId: string, page: PageData){
+        const afterPage = this.findPageIdx(afterPageId);
+        this.insertNewPageAt(afterPage+1, page);
+    }
+
 
     private unwrapChange(e: CustomEvent){
         const pageNum = this.pages.findIndex((p: Page) => p.uid === e.detail.page.uid) + 1;
