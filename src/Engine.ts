@@ -82,6 +82,25 @@ const defaultShortcuts: Shortcut[] = [
     },
 ];
 
+class Change {
+    constructor(page: Page, blocks: Set<number>){
+        this.page = page;
+        this.blocks = blocks;
+    }
+
+    public fireChange(){
+        this.page.contentWrapper.dispatchEvent(new CustomEvent('change', {
+            detail: {
+                page: this.page,
+                blocks: Array.from(this.blocks)
+            }
+        }));
+    }
+
+    public page: Page;
+    public blocks: Set<number>
+}
+
 class TransitNode {
     constructor(e: Element){
         this.tagName = e.tagName;
@@ -439,59 +458,33 @@ export default class Engine {
         }
     }
 
-    private static fireChange(page: Page, blocks: number[]){
-        page.contentWrapper.dispatchEvent(new CustomEvent('change', {
-            detail: {
-                page: page,
-                blocks: blocks
-            }
-        }))
-    }
-
-    private debounceChange(page: Page, blocks: number[], priorityEvent: boolean){
-        let fireImmediately = false;
-        const wait = this.config.debounceChanges;
-        const sortedBlocks = blocks.sort();
-        // Determine whether or not this change should be bumped up to immediate
-        if (!wait) {
-            // If debounceChanges is set to false, fire all changes immediately
-            fireImmediately = true;
-        }
-        else {
-            // Are there any previous changes that we've debounced
+    private debounceChange(ch: Change){
+        // Determine whether debounce is configured
+        if (this.config.debounceChanges){
+            // Append pending block changes and debounce the event
             const pendingKeys = Object.keys(this.pendingBlockChanges);
-            if (pendingKeys.length > 0){
-                // Is this page currently being tracked?
-                if (pendingKeys.includes(page.uid)) {
-                    // If so, check if the blocks in this change are the same blocks from the last change (ongoing event)
-                    if (!this.pendingBlockChanges[page.uid].every(
-                        (value, idx) => sortedBlocks[idx] === value)) {
-                        // If they're not, fire the event immediately
-                        fireImmediately = true;
-                    }
-                }
-                else {
-                    // If not, than we need to fire immediately, because the pending changes are on a different page
-                    fireImmediately = true;
+            if (pendingKeys.includes(ch.page.uid)){
+                for (let block of ch.blocks) {
+                    this.pendingBlockChanges[ch.page.uid].blocks.add(block);
                 }
             }
-
-        }
-        fireImmediately = priorityEvent || fireImmediately;
-        if (fireImmediately){
-            Engine.fireChange(page, blocks);
+            else {
+                this.pendingBlockChanges[ch.page.uid] = ch;
+            }
+            // Do the debounce
+            clearTimeout(this.debounceTimeout);
+            const after = () => {
+                // Build a snapshot for each page that has pending changes
+                for (let page of Object.keys(this.pendingBlockChanges)){
+                    this.pendingBlockChanges[page].fireChange();
+                    delete this.pendingBlockChanges[page];
+                }
+            };
+            this.debounceTimeout = setTimeout(after, this.config.debounceChanges);
         }
         else {
-            // If we're not firing immediately, we should update the current change blocks
-            this.pendingBlockChanges[page.uid] = sortedBlocks;
-            const remPage = () => delete this.pendingBlockChanges[page.uid];
-            clearTimeout(this.debounceTimeout);
-            function later(){
-
-                Engine.fireChange(page, blocks);
-                remPage();
-            }
-            this.debounceTimeout = setTimeout(later, wait as number);
+            // If it's not, fire the change immediately
+            ch.fireChange();
         }
     }
 
@@ -502,13 +495,9 @@ export default class Engine {
             return;
         }
         // Dispatch change events
-        const foundBlocks = new Set();
+        const foundBlocks = new Set<number>();
         const children = Array.from(p.contentWrapper.children);
-        let priorityEvent = false;
         for (let mutation of mutationsList){
-            if (mutation.type != "characterData") {
-                priorityEvent = true;
-            }
             const target = mutation.target as HTMLElement;
             const blockParent = this.findBlock(target);
             if (blockParent){
@@ -516,7 +505,7 @@ export default class Engine {
             }
         }
         if (foundBlocks.size != 0){
-            this.debounceChange(p, Array.from(foundBlocks) as number[], priorityEvent);
+            this.debounceChange(new Change(p, foundBlocks));
         }
     }
 
@@ -556,7 +545,7 @@ export default class Engine {
 
     }
 
-    private pendingBlockChanges: Object;
+    private pendingBlockChanges: { [uid: string]: Change };
     private debounceTimeout: number;
     private markedIncompatible: boolean = false;
     private shortcuts: Shortcut[];
