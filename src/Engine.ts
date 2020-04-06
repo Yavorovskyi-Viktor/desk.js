@@ -105,6 +105,7 @@ class TransitNode {
 export default class Engine {
     constructor(config: DeskConfig){
         this.config = config;
+        this.pendingBlockChanges = {};
         this.compileShortcuts();
     }
 
@@ -438,6 +439,61 @@ export default class Engine {
         }
     }
 
+    private static fireChange(page: Page, blocks: number[]){
+        page.contentWrapper.dispatchEvent(new CustomEvent('change', {
+            detail: {
+                page: page,
+                blocks: blocks
+            }
+        }))
+    }
+
+    private debounceChange(page: Page, blocks: number[], priorityEvent: boolean){
+        let fireImmediately = false;
+        const wait = this.config.debounceChanges;
+        const sortedBlocks = blocks.sort();
+        // Determine whether or not this change should be bumped up to immediate
+        if (!wait) {
+            // If debounceChanges is set to false, fire all changes immediately
+            fireImmediately = true;
+        }
+        else {
+            // Are there any previous changes that we've debounced
+            const pendingKeys = Object.keys(this.pendingBlockChanges);
+            if (pendingKeys.length > 0){
+                // Is this page currently being tracked?
+                if (pendingKeys.includes(page.uid)) {
+                    // If so, check if the blocks in this change are the same blocks from the last change (ongoing event)
+                    if (!this.pendingBlockChanges[page.uid].every(
+                        (value, idx) => sortedBlocks[idx] === value)) {
+                        // If they're not, fire the event immediately
+                        fireImmediately = true;
+                    }
+                }
+                else {
+                    // If not, than we need to fire immediately, because the pending changes are on a different page
+                    fireImmediately = true;
+                }
+            }
+
+        }
+        fireImmediately = priorityEvent || fireImmediately;
+        if (fireImmediately){
+            Engine.fireChange(page, blocks);
+        }
+        else {
+            // If we're not firing immediately, we should update the current change blocks
+            this.pendingBlockChanges[page.uid] = sortedBlocks;
+            const remPage = () => delete this.pendingBlockChanges[page.uid];
+            clearTimeout(this.debounceTimeout);
+            function later(){
+
+                Engine.fireChange(page, blocks);
+                remPage();
+            }
+            this.debounceTimeout = setTimeout(later, wait as number);
+        }
+    }
 
     public handleMutation(mutationsList: MutationRecord[], p: Page){
         // Determine if the page is overflowing
@@ -460,11 +516,7 @@ export default class Engine {
             }
         }
         if (foundBlocks.size != 0){
-            const eventType = priorityEvent ? "prioritychange" : "change";
-            p.contentWrapper.dispatchEvent(new CustomEvent(eventType, {detail: {
-                    page: p,
-                    blocks: Array.from(foundBlocks)
-                }}));
+            this.debounceChange(p, Array.from(foundBlocks) as number[], priorityEvent);
         }
     }
 
@@ -504,6 +556,8 @@ export default class Engine {
 
     }
 
+    private pendingBlockChanges: Object;
+    private debounceTimeout: number;
     private markedIncompatible: boolean = false;
     private shortcuts: Shortcut[];
     private config: DeskConfig;

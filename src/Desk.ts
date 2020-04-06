@@ -7,7 +7,7 @@ import DeskSnapshot from "../types/DeskSnapshot";
 import BlockData from "../types/BlockData";
 import PageChange from "../types/PageChange";
 import EditorAction from "../types/EditorAction";
-import { uuid, debounce } from './Util';
+import { uuid } from './Util';
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -100,15 +100,7 @@ export default class Desk{
 
     private render(){
         // Debounce change events so they're not overwhelming a listener
-        let unwrapChange;
-        const boundChange = this.unwrapChange.bind(this);
-        // TODO: add custom debouncer with awareness of what block is being edited, so we can rebounce new blocks
-        if (this.config.debounceChanges) {
-            unwrapChange = debounce(boundChange, this.config.debounceChanges, false);
-        }
-        else {
-            unwrapChange = this.unwrapChange.bind(this);
-        }
+        const unwrapChange = this.unwrapChange.bind(this);
         for (let pageIdx in this.pages){
             let pageNum = (+pageIdx)+1;
             const page = this.pages[pageIdx];
@@ -128,8 +120,6 @@ export default class Desk{
                                                                                     this.engine.onPaste(e, page));
                 // Listen to change events in onchange
                 page.contentWrapper.addEventListener('change', unwrapChange);
-                // Process priority events immediately, without debounce
-                page.contentWrapper.addEventListener('prioritychange', boundChange);
                 // Listen to mutations and pass them as well to the formatting engine
                 const observer = new MutationObserver((mutations) =>
                     this.engine.handleMutation(mutations, page));
