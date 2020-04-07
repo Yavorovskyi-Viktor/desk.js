@@ -273,18 +273,23 @@ export default class Desk{
         this.onChange([{pageNum: pageNum}, {pageNum: pageNum + 1}]);
     }
 
-    public insertPageAt(pageNum: number, page?: Page): boolean {
-        if (this.pages.length < pageNum || pageNum <  0){
+    public insertPageAt(pageIdx: number, page?: Page): boolean {
+        console.log(`Calling insert page with pagenum ${pageIdx}, page`, page);
+        if (this.pages.length < pageIdx || pageIdx <  0){
+            console.log("Returning false");
             return false;
         }
         else {
-            if (this.pages.length == pageNum){
+            if (this.pages.length == pageIdx){
+                console.log("Pushing page");
                 // Insert a page directly after the current page
                 this.pages.push(page);
             }
             else {
-                this.pages.splice(pageNum, 0, page);
+                console.log("Splicing page");
+                this.pages.splice(pageIdx, 0, page);
             }
+            console.log("Rendering after insertion");
             this.render();
         }
     }
@@ -337,7 +342,7 @@ export default class Desk{
 
     public insertNewPageAt(index: number, page: PageData){
         const newPage = new Page(this.config, page);
-        this.insertPageAt(index+1, newPage);
+        this.insertPageAt(index, newPage);
     }
 
     public insertPageBefore(beforePageId: string, page: PageData){
