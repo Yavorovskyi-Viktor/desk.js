@@ -1,6 +1,6 @@
 {
   "name": "desk-editor.js",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "author": "Will Beddow",
   "main": "dist/editor.js",
   "scripts": {

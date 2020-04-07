@@ -383,6 +383,26 @@ export default class Desk{
     }
 
     /**
+     * Return the word count of either a specific page, or the entire editor
+     *
+     * @param pageId Optionally supply the UID of a specific page to get the word count for
+     * @param pageNum Optionally supply the number of a specific page to get the word count for
+     */
+    public wordCount(pageId?: string, pageNum?: number): number {
+        if (pageId != undefined) {
+            return this.pages[this.findPageIdx(pageId)].wordCount;
+        }
+        else if (pageNum != undefined) {
+            return this.pages[pageNum - 1].wordCount;
+        }
+        else {
+            let wordCount = 0;
+            this.pages.map((p: Page) => wordCount+=p.wordCount);
+            return wordCount;
+        }
+    }
+
+    /**
      * Execute an action in the text formatting engine
      * @param action
      */

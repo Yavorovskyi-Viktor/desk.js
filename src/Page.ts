@@ -172,8 +172,7 @@ class Page {
      * @param data The block data
      */
     public insertBlock(index: number, data?: BlockData){
-        // Render the block into an HTML element
-        const block = this.renderBlock(data);
+        this.countWords();
         // Get the current number of children on the page. Note that this is a length, so 1 more than the index
         const numChildren = this.contentWrapper.children.length;
         // If the index is one more than the current number of block children, insert it as the next item onto the page
@@ -270,11 +269,32 @@ class Page {
         return this.pageHolder.getBoundingClientRect().bottom - this.config.margins.bottom;
     }
 
+    public countWords() {
+        let wC = 0;
+        for (let childG in this.contentWrapper.children){
+            let child = this.contentWrapper.children[childG];
+            if (child && child.textContent) {
+                let words = this.contentWrapper.children[childG].textContent.split(" ");
+                words.forEach((word) => {
+                    // We don't want to count spaces or zero-width characters as words
+                    if (word && word != " " && word.length > 0){
+                        // Check for a zero width character
+                        if (word.charCodeAt(0) != 8203){
+                            wC++;
+                        }
+                    }
+                })
+            }
+        }
+        this.wordCount = wC;
+    }
+
     public pageHolder: HTMLElement;
     public contentWrapper: HTMLElement;
     public currentBlockIdx: number;
     public uid: string;
     public shouldOverflow: boolean;
+    public wordCount: number;
     private config: DeskConfig;
     private initialBlocks: { [index: number]: BlockData };
 }

@@ -89,6 +89,8 @@ class Change {
     }
 
     public fireChange(){
+        // Update the word count on a page
+        this.page.countWords();
         this.page.contentWrapper.dispatchEvent(new CustomEvent('change', {
             detail: {
                 page: this.page,
