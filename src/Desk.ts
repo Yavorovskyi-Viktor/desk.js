@@ -270,7 +270,7 @@ export default class Desk{
         // Focus on the new page
         this.currentPage.focus();
         // Dispatch a change snapshot that includes the pages that changed
-        this.onChange([{pageNum: pageNum}, {pageNum: pageNum - 1}]);
+        this.onChange([{pageNum: pageNum}, {pageNum: pageNum + 1}]);
     }
 
     public insertPageAt(pageNum: number, page?: Page): boolean {
@@ -317,7 +317,7 @@ export default class Desk{
                     content: "&#8203;"
                 }
             }
-        };
+        }
         const foundPageIdx = this.findPageIdx(pageId);
         if (foundPageIdx != null){
             const pageObj = this.pages[foundPageIdx];

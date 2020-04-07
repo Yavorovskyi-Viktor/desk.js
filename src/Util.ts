@@ -12,7 +12,7 @@ function createElement(tag: string, attrs: Object): HTMLElement{
 }
 
 /**
- * Create a (not cryptographically secure), but good enough for unique page numbers, UUID.
+ * Create a (not cryptographically secure), but good enough for unique page id, UUID.
  *
  * Found at https://codepen.io/Jvsierra/pen/BNbEjW
  */
