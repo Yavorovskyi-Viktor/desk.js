@@ -550,7 +550,7 @@ export default class Engine {
     private pendingBlockChanges: { [uid: string]: Change };
     private debounceTimeout: number;
     private markedIncompatible: boolean = false;
-    private shortcuts: Shortcut[];
+    public shortcuts: Shortcut[];
     private config: DeskConfig;
 }
 

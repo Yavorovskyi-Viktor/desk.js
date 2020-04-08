@@ -402,6 +402,10 @@ export default class Desk{
         }
     }
 
+    public get shortcuts(){
+        return this.engine.shortcuts;
+    }
+
     /**
      * Execute an action in the text formatting engine
      * @param action
