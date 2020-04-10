@@ -300,3 +300,5 @@ class Page {
 }
 
 export default Page;
+
+export { pageClass, wrapperClass };

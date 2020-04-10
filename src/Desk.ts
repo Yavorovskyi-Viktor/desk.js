@@ -26,6 +26,8 @@ const defaultConfig: DeskConfig = {
     baseShortcuts: defaultShortcuts,
     extraShortcuts: [],
     blockClass: "desk-block",
+    pageClass: "desk-page",
+    pageWrapperClass: "desk-page-wrapper",
     saveOnChange: false,
     genUID: uuid,
     debounceChanges: 500
@@ -52,6 +54,8 @@ export default class Desk{
             config.saveOnChange = config.saveOnChange || defaultConfig.saveOnChange;
             config.genUID = config.genUID || defaultConfig.genUID;
             config.debounceChanges = config.debounceChanges || defaultConfig.debounceChanges;
+            config.pageClass = config.pageClass || defaultConfig.pageClass;
+            config.pageWrapperClass = config.pageWrapperClass || defaultConfig.pageWrapperClass;
         }
         this.config = config;
         // Make sure that the holder element exists on the page
@@ -240,7 +244,7 @@ export default class Desk{
             for (let blockG in pageObj.blocks){
                 const i = (+blockG);
                 if (!isNaN(i)){
-                    blocks[i] = Desk.serializeBlock(pageObj.blocks[blockG]);
+                    blocks[i] = Desk.serializeBlock(pageObj.getBlock(i));
                 }
             }
         }
@@ -274,22 +278,17 @@ export default class Desk{
     }
 
     public insertPageAt(pageIdx: number, page?: Page): boolean {
-        console.log(`Calling insert page with pagenum ${pageIdx}, page`, page);
         if (this.pages.length < pageIdx || pageIdx <  0){
-            console.log("Returning false");
             return false;
         }
         else {
             if (this.pages.length == pageIdx){
-                console.log("Pushing page");
                 // Insert a page directly after the current page
                 this.pages.push(page);
             }
             else {
-                console.log("Splicing page");
                 this.pages.splice(pageIdx, 0, page);
             }
-            console.log("Rendering after insertion");
             this.render();
         }
     }

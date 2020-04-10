@@ -50,6 +50,12 @@ interface DeskConfig{
     // is 500 ms
     debounceChanges: number | false;
 
+    // The class name of a page in the document. Default is "desk-page"
+    pageClass: string;
+
+    // The class name of a page content wrapper in the document. Default is "desk-page-wrapper"
+    pageWrapperClass: string;
+
 }
 
 export default DeskConfig;

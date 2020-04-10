@@ -295,12 +295,13 @@ export default class Engine {
      * @param child The child element
      * @param parent The parent element in question
      */
-    public static isParent(child: HTMLElement, parent: HTMLElement): boolean{
+    public isParent(child: HTMLElement, parent: HTMLElement): boolean{
         if (child.parentElement == undefined){
             return false;
         }
         // Stop when we hit the page wrapper
-        else if (child.parentElement.classList != undefined && child.parentElement.classList.contains("page-wrapper")){
+        else if (child.parentElement.classList != undefined && child.parentElement.classList
+                .contains(this.config.pageWrapperClass)){
             return false;
         }
         else {
@@ -344,10 +345,12 @@ export default class Engine {
     }
 
     public findBlock(e: HTMLElement){
-        if (e.classList != undefined && e.classList.contains(this.config.blockClass)) {
+        // A block should be a direct child of the content wrapper
+        if (e.classList != undefined && e.classList.contains(this.config.blockClass) &&
+            e.parentElement.classList.contains(this.config.pageWrapperClass)) {
             return e;
         }
-        else if (e.classList != undefined && e.classList.contains("page-wrapper") || (e.id == this.config.holder)){
+        else if (e.classList != undefined && e.classList.contains(this.config.pageWrapperClass) || (e.id == this.config.holder)){
             // If we've hit the wrapper or the holder, this isn't a block level element
             return false;
         }
@@ -379,7 +382,7 @@ export default class Engine {
                     const wrapTags = this.wrapTags.bind(this);
                     mutationsList.forEach(function(mutation){
                         if (mutation.type == "characterData"){
-                            if (Engine.isParent(mutation.target as HTMLElement, child as HTMLElement)) {
+                            if (this.isParent(mutation.target as HTMLElement, child as HTMLElement)) {
                                 // Collect the previous value for character data. If there was an old value, we need to
                                 // compute what to put on the new page. Otherwise, we can just put the entire paragraph
                                 // on the new page
