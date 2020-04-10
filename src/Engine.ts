@@ -346,8 +346,7 @@ export default class Engine {
 
     public findBlock(e: HTMLElement){
         // A block should be a direct child of the content wrapper
-        if (e.classList != undefined && e.classList.contains(this.config.blockClass) &&
-            e.parentElement.classList.contains(this.config.pageWrapperClass)) {
+        if (e.classList != undefined && e.classList.contains(this.config.blockClass)) {
             return e;
         }
         else if (e.classList != undefined && e.classList.contains(this.config.pageWrapperClass) || (e.id == this.config.holder)){
@@ -355,7 +354,7 @@ export default class Engine {
             return false;
         }
         else if (e.parentElement == undefined) {
-            console.error("Couldn't find a parent element for block, malformed document", e);
+            // If the block or its parent has been recently deleted, don't find a parent
             return false;
         }
         else {
@@ -494,6 +493,8 @@ export default class Engine {
     }
 
     public handleMutation(mutationsList: MutationRecord[], p: Page){
+        // Clean the blocks on the page
+        p.clean();
         // Determine if the page is overflowing
         if (p.isOverflowing){
             this.doOverflowCheck(mutationsList, p);
@@ -504,9 +505,19 @@ export default class Engine {
         const children = Array.from(p.contentWrapper.children);
         for (let mutation of mutationsList){
             const target = mutation.target as HTMLElement;
+            // If the target, or the found doesn't have a parent node, it was removed from the DOM by clean(), and shouldn't
+            // be included in the snapshot
+            if (!target.parentNode) {
+                continue;
+            }
             const blockParent = this.findBlock(target);
             if (blockParent){
-                foundBlocks.add(children.indexOf(blockParent));
+                // The same is true for the blockParent as it is for the target, so check that it wasn't
+                // removed by clean()
+                const parentIdx = children.indexOf(blockParent);
+                if (parentIdx != -1) {
+                    foundBlocks.add(parentIdx);
+                }
             }
         }
         if (foundBlocks.size != 0){

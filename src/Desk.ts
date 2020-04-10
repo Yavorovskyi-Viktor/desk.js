@@ -191,6 +191,7 @@ export default class Desk{
     }
 
     private static serializeBlock(blockElem: HTMLElement): BlockData{
+        console.log("Trying to serialize block", blockElem);
         let blockInner = blockElem.innerHTML;
         // Remove zero width characters
         if (blockInner === "&#8203;"){
@@ -234,10 +235,18 @@ export default class Desk{
             console.error(`Unrecognized page type ${typeof(page)}`, page);
             return;
         }
+        // Clean the page before serializing any of the blocks
+        pageObj.clean();
+        // Get the blocks from the page
         const blocks = {};
         if (blockNumbers != undefined && blockNumbers.length > 0){
             blockNumbers.forEach(function(i: number){
-               blocks[i] = Desk.serializeBlock(pageObj.getBlock(i));
+               // Since the page has just been cleaned, there's no longer a guarantee that this block
+               // exists, so we should make sure that it does
+               const blockElem = pageObj.getBlock(i);
+               if (blockElem){
+                   blocks[i] = Desk.serializeBlock(blockElem);
+               }
             });
         }
         else{

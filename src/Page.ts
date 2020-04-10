@@ -148,6 +148,62 @@ class Page {
         this.contentWrapper.children[index].innerHTML = content;
     }
 
+    private dedupeTraverse(children: HTMLCollection){
+       Array.from(children).forEach((c: Element) => {
+           let child = c as HTMLElement;
+           // Is this child a duplicate block?
+           if (child.classList.contains(this.config.blockClass)){
+               // Does it have child nodes?
+               if (child.hasChildNodes()){
+                   // If it does, start by deduping each of it's children, if it has children. The case where
+                   // it has children by not child nodes is where it has only text elements, in which case we don't
+                   // need to dedupe
+                   if (child.children.length != 0){
+                       this.dedupeTraverse(child.children);
+                   }
+                   // Replace it with its child nodes, which will be in a list, because Typescript doesn't know
+                   // that childNodes are iterable
+                   const childNodes = [];
+                   child.childNodes.forEach((n)=> childNodes.push(n));
+                   child.replaceWith(...childNodes);
+               }
+               else{
+                   // If not, remove it from the document entirely
+                   document.removeChild(child);
+               }
+           }
+           else {
+               // If the child (which is now guaranteed not to be a block), has children, dedupe them as well
+               if (child.children.length != 0) {
+                   this.dedupeTraverse(child.children);
+               }
+           }
+        });
+    }
+
+    /**
+     * Clean the blocks on the page by making sure that objects with a block class are a direct child of the
+     * content wrapper, and that each child on the paeg is wrapped in a block class
+     */
+    public clean() {
+        // Iterate through the current children on the page
+        Array.from(this.contentWrapper.children).forEach((childAccess) => {
+            let childElem = childAccess as HTMLElement;
+            // Is the child a block?
+            if (!childElem.classList || !childElem.classList.contains(this.config.blockClass)){
+                // If not, wrap it in a block
+                const newBlock = Util.createElement('div', {
+                    "class": this.config.blockClass
+                });
+                childElem.parentNode.appendChild(newBlock);
+                newBlock.appendChild(childElem);
+                childElem = newBlock;
+            }
+            // Make sure that there are no duplicate block elements like contenteditable sometimes creates
+            this.dedupeTraverse(childElem.children);
+        });
+    }
+
     /**
      * Insert a block as the next child onto the page
      *
