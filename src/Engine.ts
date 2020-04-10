@@ -288,6 +288,26 @@ export default class Engine {
             e.preventDefault();
             return;
         }
+        // Was backspace pressed?
+        if (e.key == "Backspace"){
+            // Are there any blocks left on the page?
+            if (p.contentWrapper.hasChildNodes()){
+                // If so, check if it's just one block with no text. Split this into two if statements because
+                // this potentially fires on every backspace, and webpack won't optimize this properly if it's chained
+                if (p.contentWrapper.childNodes.length == 1){
+                    if (p.contentWrapper.childNodes[0].textContent.length == 0){
+                        // Delete the page
+                        p.contentWrapper.dispatchEvent(new CustomEvent('delete'));
+                        e.preventDefault();
+                    }
+                }
+            }
+            else {
+                // If not, delete the page
+                p.contentWrapper.dispatchEvent(new CustomEvent('delete'));
+                e.preventDefault();
+            }
+        }
     }
 
     /**
