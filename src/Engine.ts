@@ -379,9 +379,10 @@ export default class Engine {
                     const collectedMutationText = [];
                     const getTags = this.getTags.bind(this);
                     const wrapTags = this.wrapTags.bind(this);
+                    const isParent = this.isParent.bind(this);
                     mutationsList.forEach(function(mutation){
                         if (mutation.type == "characterData"){
-                            if (this.isParent(mutation.target as HTMLElement, child as HTMLElement)) {
+                            if (isParent(mutation.target as HTMLElement, child as HTMLElement)) {
                                 // Collect the previous value for character data. If there was an old value, we need to
                                 // compute what to put on the new page. Otherwise, we can just put the entire paragraph
                                 // on the new page

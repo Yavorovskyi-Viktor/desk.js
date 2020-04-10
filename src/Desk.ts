@@ -191,7 +191,6 @@ export default class Desk{
     }
 
     private static serializeBlock(blockElem: HTMLElement): BlockData{
-        console.log("Trying to serialize block", blockElem);
         let blockInner = blockElem.innerHTML;
         // Remove zero width characters
         if (blockInner === "&#8203;"){
