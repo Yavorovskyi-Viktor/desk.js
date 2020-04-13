@@ -56,6 +56,9 @@ interface DeskConfig{
     // The class name of a page content wrapper in the document. Default is "desk-page-wrapper"
     pageWrapperClass: string;
 
+    // Optionally provide a static session key. Otherwise, it will be automatically generated as a UUID
+    sessionKey?: string | false;
+
 }
 
 export default DeskConfig;

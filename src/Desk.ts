@@ -30,7 +30,8 @@ const defaultConfig: DeskConfig = {
     pageWrapperClass: "desk-page-wrapper",
     saveOnChange: false,
     genUID: uuid,
-    debounceChanges: 500
+    debounceChanges: 500,
+    sessionKey: false
 };
 
 export default class Desk{
@@ -56,8 +57,13 @@ export default class Desk{
             config.debounceChanges = config.debounceChanges || defaultConfig.debounceChanges;
             config.pageClass = config.pageClass || defaultConfig.pageClass;
             config.pageWrapperClass = config.pageWrapperClass || defaultConfig.pageWrapperClass;
+            config.sessionKey = config.sessionKey || defaultConfig.sessionKey;
         }
         this.config = config;
+
+        // Generate a session key if one wasn't provided
+        this.sessionKey = config.sessionKey || uuid();
+
         // Make sure that the holder element exists on the page
         this.editorHolder = document.getElementById(this.config.holder);
         if (this.editorHolder == null){
@@ -421,6 +427,7 @@ export default class Desk{
         Engine.executeAction(action);
     }
 
+    public sessionKey: string;
     public onPage: number;
     public pages: Page[];
     private engine: Engine;
