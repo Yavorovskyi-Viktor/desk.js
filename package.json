@@ -1,10 +1,10 @@
 {
   "name": "desk-editor.js",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "author": "Will Beddow",
   "main": "dist/editor.js",
   "scripts": {
-    "build": "babel --out-file dist/desk.js src/Desk.ts"
+    "build": "webpack"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
