@@ -1,6 +1,6 @@
 {
   "name": "desk-editor.js",
-  "version": "1.0.11",
+  "version": "1.1.0",
   "author": "Will Beddow",
   "main": "dist/editor.js",
   "scripts": {
@@ -20,5 +20,8 @@
     "webpack-cli": "^3.3.11",
     "@babel/plugin-transform-runtime": "^7.9.0",
     "babel-plugin-class-display-name": "^2.1.0"
+  },
+  "dependencies": {
+    "quill-delta": "^4.2.2"
   }
 }

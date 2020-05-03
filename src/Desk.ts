@@ -4,35 +4,13 @@ import PageData from "../types/PageData";
 import Page from './Page';
 import Engine, { defaultShortcuts } from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
-import BlockData from "../types/BlockData";
-import PageChange from "../types/PageChange";
 import EditorAction from "../types/EditorAction";
 import { uuid } from './Util';
+import { defaultConfig } from './Defaults';
 
-const defaultConfig: DeskConfig = {
-    holder: "desk-editor",
-    height: "1056px",
-    width: "815px",
-    pages: [],
-    onPage: 1,
-    onChange: (() => {}),
-    spacing: "20px",
-    margins: {
-        "left": 15,
-        "right": 15,
-        "top": 15,
-        "bottom": 15
-    },
-    baseShortcuts: defaultShortcuts,
-    extraShortcuts: [],
-    blockClass: "desk-block",
-    pageClass: "desk-page",
-    pageWrapperClass: "desk-page-wrapper",
-    saveOnChange: false,
-    genUID: uuid,
-    debounceChanges: 500,
-    sessionKey: false
-};
+// External imports
+import Delta from "quill-delta";
+
 
 export default class Desk{
     constructor(config: DeskConfig){
@@ -40,24 +18,9 @@ export default class Desk{
             config = defaultConfig
         }
         else{
-            // Set configuration defaults. The default values for these are detailed in DeskConfig.ts
-            config.holder = config.holder || defaultConfig.holder;
-            config.height = config.height || defaultConfig.height;
-            config.width = config.width || defaultConfig.width;
-            config.pages = config.pages || defaultConfig.pages;
-            config.onPage = config.onPage || defaultConfig.onPage;
-            config.onChange = config.onChange || defaultConfig.onChange;
-            config.margins = config.margins || defaultConfig.margins;
-            config.spacing = config.spacing || defaultConfig.spacing;
-            config.baseShortcuts = config.baseShortcuts || defaultConfig.baseShortcuts;
-            config.extraShortcuts = config.extraShortcuts || defaultConfig.extraShortcuts;
-            config.blockClass = config.blockClass || defaultConfig.blockClass;
-            config.saveOnChange = config.saveOnChange || defaultConfig.saveOnChange;
-            config.genUID = config.genUID || defaultConfig.genUID;
-            config.debounceChanges = config.debounceChanges || defaultConfig.debounceChanges;
-            config.pageClass = config.pageClass || defaultConfig.pageClass;
-            config.pageWrapperClass = config.pageWrapperClass || defaultConfig.pageWrapperClass;
-            config.sessionKey = config.sessionKey || defaultConfig.sessionKey;
+            // Set configuration defaults. The default values for these are detailed in DeskConfig.ts, and
+            // set in Defaults.ts
+            this.config = Object.assign(defaultConfig, config);
         }
         this.config = config;
 
@@ -196,25 +159,12 @@ export default class Desk{
         return false;
     }
 
-    private static serializeBlock(blockElem: HTMLElement): BlockData{
-        let blockInner = blockElem.innerHTML;
-        // Remove zero width characters
-        if (blockInner === "&#8203;"){
-            blockInner = "";
-        }
-        return {
-            content: blockInner
-        };
-    }
-
     /**
-     * Build a snapshot of a given page. If blockNumbers or blockUIDs is defined, return just those blocks. From
-     * the page snapshot. Otherwise, return all pages
+     * Build a snapshot of a given page. If page is defined, just return that page. Otherwise, return all pages
      *
      * @param page The page to build a snapshot of. Either a page number >= 1, a string page UID, or a page object
-     * @param blockNumbers: A set of block indexes
      */
-    private buildSnapshot(page: number | string | Page, blockNumbers?: number[]):
+    private buildSnapshot(page: number | string | Page):
         PageData {
 
         let pageObj;
@@ -242,44 +192,23 @@ export default class Desk{
         }
         // Clean the page before serializing any of the blocks
         pageObj.clean();
-        // Get the blocks from the page
-        const blocks = {};
-        if (blockNumbers != undefined && blockNumbers.length > 0){
-            blockNumbers.forEach(function(i: number){
-               // Since the page has just been cleaned, there's no longer a guarantee that this block
-               // exists, so we should make sure that it does
-               const blockElem = pageObj.getBlock(i);
-               if (blockElem){
-                   blocks[i] = Desk.serializeBlock(blockElem);
-               }
-            });
-        }
-        else{
-            for (let blockG in pageObj.blocks){
-                const i = (+blockG);
-                if (!isNaN(i)){
-                    blocks[i] = Desk.serializeBlock(pageObj.getBlock(i));
-                }
-            }
-        }
-        const snapshot: PageData = {uid: pageObj.uid, blocks: blocks};
+        // Get the delta from the page
+        const snapshot: PageData = {uid: pageObj.uid, delta: pageObj.delta};
         // Return the resulting snapshot
         return snapshot;
     }
 
 
-    private breakPage(page: Page, nextPageContent){
+    private breakPage(page: Page, nextPageContent: Delta){
         const pageIdx: number = this.pages.findIndex((p: Page) => p.uid === page.uid);
         const pageNum = pageIdx + 1;
-        const newPage = new Page(this.config, { blocks: nextPageContent });
+        const newPage = new Page(this.config, { delta: nextPageContent });
         this.onPage = pageNum + 1;
         // Check to see if a page already exists with the page number following pageNum
         if (this.pages.length > pageNum){
             // If it does, push the pending page content onto that page
             const nextPage = this.pages[pageNum];
-            for (let block of nextPageContent){
-                nextPage.insertBlock(0, block);
-            }
+            nextPage.setContents(nextPageContent);
         }
         else {
             // If not, create a new page
@@ -375,7 +304,7 @@ export default class Desk{
         this.onChange([{pageNum: pageNum, blocks: e.detail.blocks}]);
     }
 
-    private onChange(pagesChanged: PageChange[]){
+    private onChange(pagesChanged: PageData[]){
         let snapshot;
         // Check if we should handle all pages
         if (this.config.saveOnChange){
@@ -385,7 +314,7 @@ export default class Desk{
             // TODO: handle page deletion
             const pageSnapshots = {};
             for (let pageChanged of pagesChanged){
-                pageSnapshots[pageChanged.pageNum] = this.buildSnapshot(pageChanged.pageNum, pageChanged.blocks);
+                pageSnapshots[pageChanged.pageNum] = this.buildSnapshot(pageChanged.pageNum, pageChanged.delta);
             }
             snapshot = {pages: pageSnapshots};
         }

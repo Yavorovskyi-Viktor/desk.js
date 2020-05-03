@@ -5,7 +5,7 @@ import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import { createElement } from './Util';
 import DeskSnapshot from "../types/DeskSnapshot";
-import BlockData from "../types/BlockData";
+import Delta from 'quill-delta';
 
 const defaultShortcuts: Shortcut[] = [
     {
@@ -379,6 +379,29 @@ export default class Engine {
         }
         else {
             return this.findBlock(e.parentElement);
+        }
+    }
+
+    /**
+     * Render a quill delta into an HTML element
+     *
+     * @param delta The delta to render
+     */
+    public static renderDelta(delta: Delta): HTMLElement {
+        for (let op of delta.ops){
+            if (op.insert != undefined){
+
+            }
+            else if (op.retain != undefined){
+
+            }
+            else if (op.delete != undefined){
+
+            }
+            else {
+                console.error("Malformed delta ", delta);
+                throw new Error("Malformed delta");
+            }
         }
     }
 
