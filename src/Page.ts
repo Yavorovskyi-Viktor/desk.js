@@ -3,7 +3,6 @@ import PageData from "../types/PageData";
 import DeskConfig from "../types/DeskConfig";
 import * as Util from './Util';
 import Engine from "./Engine";
-import BlockData from "../types/BlockData";
 
 // External imports
 import Delta from 'quill-delta';
@@ -71,14 +70,14 @@ class Page {
          * the containing page
          * ---------------
          * |   Page      |
-         * | -------------
+         * | ------------|
          * | | Wrapper   |
          * | | --------- |
          * | | | Block | |
          * | | --------- |
          * | |           |
          * | ------------|
-         * --------------|
+         * ---------------
          */
         if (this.pageHolder == undefined){
             // Create the main page
@@ -147,8 +146,8 @@ class Page {
         this.render();
     }
 
-    public updateContents(d: Delta){
-        this.delta.
+    public getText(): string {
+        return this.contentWrapper.textContent;
     }
 
     public countWords() {

@@ -1,6 +1,83 @@
 import DeskConfig from "../types/DeskConfig";
 import {defaultShortcuts} from "./Engine";
 import {uuid} from "./Util";
+import {Shortcut, SpecialKey} from "../types/KeyboardShortcut";
+import {Action} from "../types/EditorAction";
+
+const defaultShortcuts: Shortcut[] = [
+    {
+        name: "Bold",
+        action: Action.makeBold,
+        label: "CTRL + B",
+        shortcut: {
+            special: [SpecialKey.controlMeta],
+            standard: "KeyB"
+        }
+    },
+    {
+        name: "Italic",
+        action: Action.makeItalic,
+        label: "CTRL + I",
+        shortcut: {
+            special: [SpecialKey.controlMeta],
+            standard:  "KeyI"
+        }
+    },
+    {
+        name: "Underline",
+        action: Action.makeUnderline,
+        label: "CTRL + U",
+        shortcut: {
+            special: [SpecialKey.controlMeta],
+            standard: "KeyU"
+        }
+    },
+    {
+        name: "Strikethrough",
+        action: Action.makeStrikethrough,
+        label: "CTRL + SHIFT + 5",
+        shortcut: {
+            special: [SpecialKey.controlMeta, SpecialKey.shift],
+            standard: "Digit5"
+        }
+    },
+    {
+        name: "Indent",
+        action: Action.indent,
+        label: "TAB",
+        shortcut: {
+            special: [],
+            standard: "Tab"
+        }
+    },
+    {
+        name: "Unindent",
+        action: Action.unindent,
+        label: "SHIFT + TAB",
+        shortcut: {
+            special: [SpecialKey.shift],
+            standard: "Tab"
+        }
+    },
+    {
+        name: "Undo",
+        action: Action.undo,
+        label: "CTRL + Z",
+        shortcut: {
+            special: [SpecialKey.controlMeta],
+            standard: "KeyZ"
+        }
+    },
+    {
+        name: "Redo",
+        action: Action.redo,
+        label: "CTRL + SHIFT + Z",
+        shortcut: {
+            special: [SpecialKey.controlMeta, SpecialKey.shift],
+            standard: "KeyZ"
+        }
+    },
+];
 
 const defaultConfig: DeskConfig = {
     holder: "desk-editor",
@@ -27,4 +104,6 @@ const defaultConfig: DeskConfig = {
     sessionKey: false
 };
 
-export { defaultConfig };
+
+
+export { defaultConfig, defaultShortcuts };

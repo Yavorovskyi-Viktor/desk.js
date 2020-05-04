@@ -7,80 +7,6 @@ import { createElement } from './Util';
 import DeskSnapshot from "../types/DeskSnapshot";
 import Delta from 'quill-delta';
 
-const defaultShortcuts: Shortcut[] = [
-    {
-        name: "Bold",
-        action: Action.makeBold,
-        label: "CTRL + B",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyB"
-        }
-    },
-    {
-        name: "Italic",
-        action: Action.makeItalic,
-        label: "CTRL + I",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard:  "KeyI"
-        }
-    },
-    {
-        name: "Underline",
-        action: Action.makeUnderline,
-        label: "CTRL + U",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyU"
-        }
-    },
-    {
-        name: "Strikethrough",
-        action: Action.makeStrikethrough,
-        label: "CTRL + SHIFT + 5",
-        shortcut: {
-            special: [SpecialKey.controlMeta, SpecialKey.shift],
-            standard: "Digit5"
-        }
-    },
-    {
-      name: "Indent",
-      action: Action.indent,
-      label: "TAB",
-      shortcut: {
-          special: [],
-          standard: "Tab"
-      }
-    },
-    {
-        name: "Unindent",
-        action: Action.unindent,
-        label: "SHIFT + TAB",
-        shortcut: {
-            special: [SpecialKey.shift],
-            standard: "Tab"
-        }
-    },
-    {
-        name: "Undo",
-        action: Action.undo,
-        label: "CTRL + Z",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyZ"
-        }
-    },
-    {
-        name: "Redo",
-        action: Action.redo,
-        label: "CTRL + SHIFT + Z",
-        shortcut: {
-            special: [SpecialKey.controlMeta, SpecialKey.shift],
-            standard: "KeyZ"
-        }
-    },
-];
 
 class Change {
     constructor(page: Page, blocks: Set<number>){
@@ -257,8 +183,6 @@ export default class Engine {
                 break;
             case (Action.doPrint):
                 break;
-            case (Action.save):
-                break;
         }
     }
 
@@ -387,22 +311,45 @@ export default class Engine {
      *
      * @param delta The delta to render
      */
-    public static renderDelta(delta: Delta): HTMLElement {
+    public static renderDeltaDocument(delta: Delta): HTMLElement {
+        const rootElem = createElement("div", {});
+        // Prioritized render stack
+        const renderStack = [];
         for (let op of delta.ops){
-            if (op.insert != undefined){
+            const renderFrame = [];
+            // Deltas which represent documents should only have insert attributes
+            if (op.insert != undefined) {
+                // The two valid types for an insert are string and object
+                let insertType = typeof(op.insert);
+                if (insertType == "string"){
+                    // Iterate through the frames of the render stack
+                    for (const prevFrame of renderStack){
+                        // If there are any frames from this level of the stack that are still enabled, check
+                        // if
+                    }
+                }
+                else if (op.insert instanceof Object){
 
-            }
-            else if (op.retain != undefined){
-
-            }
-            else if (op.delete != undefined){
-
+                }
+                else {
+                    let errorMsg = `Malformed insert type ${insertType}`;
+                    console.error(errorMsg);
+                    throw new Error(errorMsg);
+                }
             }
             else {
-                console.error("Malformed delta ", delta);
-                throw new Error("Malformed delta");
+                const errorMsg = "Malformed delta document doesn't offer insert";
+                // If that's not the case, throw a malformed document error
+                console.error(errorMsg);
+                throw new Error(errorMsg);
             }
+            // Push the new render frame onto the render stack
+            renderStack.push(renderFrame);
         }
+        for (const rootFrame of renderStack) {
+            rootElem.appendChild(rootFrame);
+        }
+        return rootElem;
     }
 
     private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
@@ -433,7 +380,7 @@ export default class Engine {
                                     // Figure out where the text broke
                                     const oldLength = mutation.oldValue.length;
                                     let splitIndex = oldLength - 1;
-                                    // Keep going back until we hit the beginning of the page and
+                                    // Keep going back until we hit the beginning of the page
                                     while (splitIndex > 0 && mutation.target.textContent[splitIndex] != " "){
                                         splitIndex--;
                                     }
@@ -611,8 +558,3 @@ export default class Engine {
     public shortcuts: Shortcut[];
     private config: DeskConfig;
 }
-
-
-
-export { defaultShortcuts };
-
