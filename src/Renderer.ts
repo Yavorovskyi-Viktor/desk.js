@@ -9,7 +9,7 @@ const renderMap: { [attrName: string]: attributeRenderer } = {
     "italic": () => createElement("i"),
     "underline": () => createElement("u"),
     "strikethrough": () => createElement("strike"),
-    "font": (v) => createElement("font", {style: `font-family: ${v};`}),
+    "font": (v) => createElement("span", {style: `font-family: ${v};`}),
     "header": (v) => createElement(`h${v}`),
     "blockquote": () => createElement("blockquote")
 };
@@ -23,41 +23,102 @@ const parseMap: { [tagName: string]: attributeParser } = {
     "blockquote": () => ({blockquote: true})
 };
 
-function dedupeTraverse(root: HTMLElement) {
 
-}
+class RenderTree {
+    constructor(elem: Node){
+        this.head = elem;
+        this.children = [];
+        this.sealed = false;
+    }
 
-function renderDocument(ops: Op[]): HTMLElement {
-    /**
-     * Render a document, e.g a list of only insert operations
-     */
-    const root = createElement("div");
-    // Render pass
-    for (let op of ops){
-        if (op.insert != undefined){
-            const opRoot = createElement("span", {"data-type": "marker"});
-            let elemRoot = opRoot;
-            // Iterate through the attributes, merging them as child elements into opRoot
-            for (const attrName of Object.keys(op.attributes)) {
-                const renderer = renderMap[attrName];
-                if (renderer == undefined){
-                    throw new Error(`Can't render unsupported attribute ${attrName}`);
-                }
-                else {
-                    // Actually render the element, and set it as the new head
-                    const rendered = renderer(op.attributes[attrName]);
-                    elemRoot.appendChild(rendered);
-                    elemRoot = rendered;
+    public insert(elems: Node[]) {
+        if (elems.length != 0){
+            let firstElem = elems.shift();
+            for (let child of this.children) {
+                if (!child.sealed){
+                    if (child.head.isEqualNode(firstElem)) {
+                        return child.insert(elems);
+                    }
+                    else {
+                        child.sealed = true;
+                    }
                 }
             }
-            root.appendChild(opRoot);
-        }
-        else {
-            const errorMsg = "Non insert operation found in document render, document malformed";
-            console.error(errorMsg, op);
-            throw new Error(errorMsg);
+            let newTree = new RenderTree(firstElem);
+            newTree.insert(elems);
+            this.children.push(newTree);
         }
     }
-    // Deduplication pass
-    return root;
+
+    public combineChildren() {
+        while (this.children.length > 0){
+            let child = this.children.shift();
+            child.combineChildren();
+            this.head.appendChild(child.head);
+        }
+    }
+
+    public sealed: boolean;
+    public head: Node;
+    public children: RenderTree[];
+}
+
+class RenderNode {
+    constructor(text: string, attributes?: Object) {
+        this.text = text;
+        this.elements = [];
+        this.attributes = attributes;
+    }
+
+    public render(){
+        if (this.attributes != undefined) {
+            // Iterate through the attributes, merging them as child elements into opRoot. Sort the keys
+            // so that the deduplication pass can match more efficiently
+            const sortedKeys = Object.keys(this.attributes).sort();
+            console.log("sortedKeys are ", sortedKeys);
+            for (const attrName of sortedKeys) {
+                const renderer = renderMap[attrName];
+                if (renderer == undefined) {
+                    throw new Error(`Can't render unsupported attribute ${attrName}`);
+                } else {
+                    // Actually render the element
+                    const rendered = renderer(this.attributes[attrName]);
+                    this.elements.push(rendered);
+                }
+            }
+        }
+        this.elements.push(document.createTextNode(this.text));
+    }
+
+    public text: string;
+    public elements: Node[];
+    private readonly attributes: Object;
+}
+
+class Renderer {
+    constructor(ops){
+        this.nodes = ops.map((op) => {
+            if (op.insert != undefined) {
+                return new RenderNode(op.insert, op.attributes);
+            }
+            else {
+                const errorMsg = "Non insert operation found in document render, document malformed";
+                console.error(errorMsg, op);
+                throw new Error(errorMsg);
+            }
+        });
+    }
+
+    public render(): Node {
+        let root = createElement('div');
+        let tree = new RenderTree(root);
+        this.nodes.forEach((node) => {
+            node.render();
+            tree.insert(node.elements);
+        });
+        tree.combineChildren();
+        return tree.head;
+    }
+
+    private nodes: RenderNode[];
 }

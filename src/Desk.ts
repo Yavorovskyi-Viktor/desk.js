@@ -2,7 +2,7 @@
 import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
-import Engine, { defaultShortcuts } from "./Engine";
+import Engine from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
 import EditorAction from "../types/EditorAction";
 import { uuid } from './Util';
