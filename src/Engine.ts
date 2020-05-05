@@ -6,6 +6,7 @@ import Page from "./Page";
 import { createElement } from './Util';
 import DeskSnapshot from "../types/DeskSnapshot";
 import Delta from 'quill-delta';
+import AttributeMap from "quill-delta/dist/AttributeMap";
 
 
 class Change {
@@ -306,15 +307,37 @@ export default class Engine {
         }
     }
 
+    private static renderInsert(content: string, attributes: AttributeMap): HTMLElement{
+        let tagName;
+        let tagAttrs = {};
+        for (const attrName: string of Object.keys(attributes)){
+            // The supported HTML tags that these attributes map to
+            switch (attrName) {
+                case "bold":
+                    tagName = "b";
+                    break;
+                case "italic":
+                    tagName = "i";
+                    break;
+                case "underline":
+                    tagName = "u";
+                    break;
+                case ""
+            }
+        }
+        return createELement(tagName, tagAttrs);
+    }
+
     /**
      * Render a quill delta into an HTML element
      *
      * @param delta The delta to render
      */
     public static renderDeltaDocument(delta: Delta): HTMLElement {
-        const rootElem = createElement("div", {});
         // Prioritized render stack
         const renderStack = [];
+        const currentAttrs = {};
+
         for (let op of delta.ops){
             const renderFrame = [];
             // Deltas which represent documents should only have insert attributes
