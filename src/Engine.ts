@@ -307,76 +307,9 @@ export default class Engine {
         }
     }
 
-    private static renderInsert(content: string, attributes: AttributeMap): HTMLElement{
-        let tagName;
-        let tagAttrs = {};
-        for (const attrName: string of Object.keys(attributes)){
-            // The supported HTML tags that these attributes map to
-            switch (attrName) {
-                case "bold":
-                    tagName = "b";
-                    break;
-                case "italic":
-                    tagName = "i";
-                    break;
-                case "underline":
-                    tagName = "u";
-                    break;
-                case ""
-            }
-        }
-        return createELement(tagName, tagAttrs);
-    }
-
-    /**
-     * Render a quill delta into an HTML element
-     *
-     * @param delta The delta to render
-     */
-    public static renderDeltaDocument(delta: Delta): HTMLElement {
-        // Prioritized render stack
-        const renderStack = [];
-        const currentAttrs = {};
-
-        for (let op of delta.ops){
-            const renderFrame = [];
-            // Deltas which represent documents should only have insert attributes
-            if (op.insert != undefined) {
-                // The two valid types for an insert are string and object
-                let insertType = typeof(op.insert);
-                if (insertType == "string"){
-                    // Iterate through the frames of the render stack
-                    for (const prevFrame of renderStack){
-                        // If there are any frames from this level of the stack that are still enabled, check
-                        // if
-                    }
-                }
-                else if (op.insert instanceof Object){
-
-                }
-                else {
-                    let errorMsg = `Malformed insert type ${insertType}`;
-                    console.error(errorMsg);
-                    throw new Error(errorMsg);
-                }
-            }
-            else {
-                const errorMsg = "Malformed delta document doesn't offer insert";
-                // If that's not the case, throw a malformed document error
-                console.error(errorMsg);
-                throw new Error(errorMsg);
-            }
-            // Push the new render frame onto the render stack
-            renderStack.push(renderFrame);
-        }
-        for (const rootFrame of renderStack) {
-            rootElem.appendChild(rootFrame);
-        }
-        return rootElem;
-    }
 
     private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
-        const nextPageItems: BlockData[] = [];
+        const nextPageItems: any[] = [];
         const pageBottom  = p.pageBottom;
         console.log(`Overflowing, page bottom is ${pageBottom} nodes:`);
         for (let childIdx in p.contentWrapper.children) {

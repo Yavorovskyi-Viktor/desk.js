@@ -58,6 +58,10 @@ class Page {
         return `desk-wrapper-${this.uid}`;
     }
 
+    public clean() {
+        console.warn("Deprecated call to clean must be removed");
+    }
+
     /**
      * Render the blocks in a page, and bind an abstract page to the DOM.
      * Should only be called once per page per document
