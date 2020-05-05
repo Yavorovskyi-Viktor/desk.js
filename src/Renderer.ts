@@ -75,7 +75,6 @@ class RenderNode {
             // Iterate through the attributes, merging them as child elements into opRoot. Sort the keys
             // so that the deduplication pass can match more efficiently
             const sortedKeys = Object.keys(this.attributes).sort();
-            console.log("sortedKeys are ", sortedKeys);
             for (const attrName of sortedKeys) {
                 const renderer = renderMap[attrName];
                 if (renderer == undefined) {
