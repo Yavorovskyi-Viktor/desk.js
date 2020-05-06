@@ -6,6 +6,7 @@ import Engine from "./Engine";
 
 // External imports
 import Delta from 'quill-delta';
+import Renderer from "./Renderer";
 
 // The class name for a page in the DOM
 const pageClass = "desk-page";
@@ -111,7 +112,9 @@ class Page {
         }
         if (!this.contentWrapper.hasChildNodes()){
             // Render the initial delta
-
+            let renderer = new Renderer(this.delta.ops);
+            let initialContent = renderer.render();
+            this.contentWrapper.appendChild(initialContent);
             // Set the current block
             this.currentBlockIdx = this.contentWrapper.children.length - 1;
         }

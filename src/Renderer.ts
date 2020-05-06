@@ -121,3 +121,5 @@ class Renderer {
 
     private nodes: RenderNode[];
 }
+
+export default Renderer;
