@@ -235,6 +235,12 @@ export default class Engine {
         }
     }
 
+    public onInput(i: InputEvent, p: Page) {
+        console.log("Input", i);
+        // Handled input cases, based on https://rawgit.com/w3c/input-events/v1/index.html#interface-InputEvent-Attributes
+
+    }
+
     /**
      * Walk the DOM tree to recursively find out if child is an ancestor of parent
      * @param child The child element
@@ -288,7 +294,6 @@ export default class Engine {
             }
         }
     }
-
 
 
     private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
@@ -389,71 +394,6 @@ export default class Engine {
             e.stopPropagation();
             e.preventDefault();
             return false;
-        }
-    }
-
-    private debounceChange(ch: Change){
-        // Determine whether debounce is configured
-        if (this.config.debounceChanges){
-            // Append pending block changes and debounce the event
-            const pendingKeys = Object.keys(this.pendingBlockChanges);
-            if (pendingKeys.includes(ch.page.uid)){
-                for (let block of ch.blocks) {
-                    this.pendingBlockChanges[ch.page.uid].blocks.add(block);
-                }
-            }
-            else {
-                this.pendingBlockChanges[ch.page.uid] = ch;
-            }
-            // Do the debounce
-            clearTimeout(this.debounceTimeout);
-            const after = () => {
-                // Build a snapshot for each page that has pending changes
-                for (let page of Object.keys(this.pendingBlockChanges)){
-                    this.pendingBlockChanges[page].fireChange();
-                    delete this.pendingBlockChanges[page];
-                }
-            };
-            this.debounceTimeout = setTimeout(after, this.config.debounceChanges);
-        }
-        else {
-            // If it's not, fire the change immediately
-            ch.fireChange();
-        }
-    }
-
-    public handleMutation(mutationsList: MutationRecord[], p: Page){
-        // Clean the blocks on the page
-        p.clean();
-        // Determine if the page is overflowing
-        if (p.isOverflowing){
-            this.doOverflowCheck(mutationsList, p);
-            return;
-        }
-        // Dispatch change events
-        const foundBlocks = new Set<number>();
-        const children = Array.from(p.contentWrapper.children);
-        for (let mutation of mutationsList){
-            const target = mutation.target as HTMLElement;
-            // If the target, or the found doesn't have a parent node, it was removed from the DOM by clean(), and shouldn't
-            // be included in the snapshot
-            if (!target.parentNode) {
-                continue;
-            }
-            switch (mutation.type) {
-                case "childList":
-                    console.log("Child list mutation", mutation);
-                    break;
-                case "characterData":
-                    console.log("Character data mutation", mutation);
-                    break;
-                case "attributes":
-                    console.log("Attribute mutation", mutation);
-                    break;
-            }
-        }
-        if (foundBlocks.size != 0){
-            this.debounceChange(new Change(p, foundBlocks));
         }
     }
 

@@ -78,7 +78,7 @@ class Page {
          * | ------------|
          * | | Wrapper   |
          * | | --------- |
-         * | | | Block | |
+         * | | |Content| |
          * | | --------- |
          * | |           |
          * | ------------|
@@ -111,10 +111,12 @@ class Page {
             this.pageHolder.appendChild(this.contentWrapper);
         }
         if (!this.contentWrapper.hasChildNodes()){
-            // Render the initial delta
-            let renderer = new Renderer(this.delta.ops);
-            let initialContent = renderer.render();
-            this.contentWrapper.appendChild(initialContent);
+            // Render the initial delta, if it exists
+            if (this.delta.ops.length != 0) {
+                let renderer = new Renderer(this.delta.ops);
+                let initialContent = renderer.render();
+                this.contentWrapper.appendChild(initialContent);
+            }
             // Set the current block
             this.currentBlockIdx = this.contentWrapper.children.length - 1;
         }

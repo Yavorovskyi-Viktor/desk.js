@@ -13,15 +13,16 @@ import Delta from "quill-delta";
 
 
 export default class Desk{
-    constructor(config: DeskConfig){
+    constructor(config?: DeskConfig){
         if (config == undefined){
             config = defaultConfig
         }
         else{
             // Set configuration defaults. The default values for these are detailed in DeskConfig.ts, and
             // set in Defaults.ts
-            this.config = Object.assign(defaultConfig, config);
+            config = Object.assign(defaultConfig, config);
         }
+
         this.config = config;
 
         // Generate a session key if one wasn't provided
@@ -46,6 +47,7 @@ export default class Desk{
             this.pages.push(new Page(this.config));
             this.onPage = 1;
         }
+
         //Instantiate the text formatting engine
         this.engine = new Engine(this.config);
 
@@ -66,7 +68,6 @@ export default class Desk{
 
     private render(){
         // Debounce change events so they're not overwhelming a listener
-        const unwrapChange = this.unwrapChange.bind(this);
         for (let pageIdx in this.pages){
             let pageNum = (+pageIdx)+1;
             const page = this.pages[pageIdx];
@@ -76,6 +77,8 @@ export default class Desk{
                 // Pass all keydown and input events on the page to the text formatting engine
                 page.contentWrapper.addEventListener('keydown', (e: KeyboardEvent) =>
                                                                                 this.engine.onKeydown(e, page));
+                page.contentWrapper.addEventListener('input', (i: InputEvent) =>
+                                                                                this.engine.onInput(i, page));
                 // Pass overflow events back to the page manager so we can break the page
                 page.contentWrapper.addEventListener('overflow', (e: CustomEvent) =>
                                                                         this.breakPage(page, e.detail));
@@ -84,18 +87,6 @@ export default class Desk{
                 // Pass paste events to the text formatting engine
                 page.contentWrapper.addEventListener('paste', (e: ClipboardEvent) =>
                                                                                     this.engine.onPaste(e, page));
-                // Listen to change events in onchange
-                page.contentWrapper.addEventListener('change', unwrapChange);
-                // Listen to mutations and pass them as well to the formatting engine
-                const observer = new MutationObserver((mutations) =>
-                    this.engine.handleMutation(mutations, page));
-                observer.observe(page.contentWrapper, {
-                    characterData: true,
-                    characterDataOldValue: true,
-                    childList: true,
-                    subtree: true
-                });
-
                 this.editorHolder.appendChild(renderedPage);
                 // If this is the page that the user is currently on, and it hasn't been rendered yet, focus on it
                 if (pageNum == this.onPage){
@@ -203,8 +194,6 @@ export default class Desk{
         }
         // Focus on the new page
         this.currentPage.focus();
-        // Dispatch a change snapshot that includes the pages that changed
-        this.onChange([{pageNum: pageNum}, {pageNum: pageNum + 1}]);
     }
 
     public insertPageAt(pageIdx: number, page?: Page): boolean {
@@ -243,31 +232,6 @@ export default class Desk{
         }
     }
 
-    public setPageContent(pageId: string, blocks: Object){
-        // If the blocks are empty, set a single zero width block
-        if (Object.keys(blocks).length == 0){
-            blocks = {
-                0: {
-                    content: "&#8203;"
-                }
-            }
-        }
-        const foundPageIdx = this.findPageIdx(pageId);
-        if (foundPageIdx != null){
-            const pageObj = this.pages[foundPageIdx];
-            // Clear the blocks currently on the page
-            pageObj.contentWrapper.textContent = '';
-            // Insert each block onto the page
-            for (let blockK of Object.keys(blocks)){
-                const block: BlockData = blocks[blockK];
-                pageObj.insertBlock((+blockK), block);
-            }
-        }
-        else {
-            console.error(`Couldn't find page with ID ${pageId}`);
-            return null;
-        }
-    }
 
     public insertNewPageAt(index: number, page: PageData){
         const newPage = new Page(this.config, page);
@@ -285,31 +249,6 @@ export default class Desk{
         this.insertNewPageAt(afterPage+1, page);
     }
 
-
-    private unwrapChange(e: CustomEvent){
-        const pageNum = this.pages.findIndex((p: Page) => p.uid === e.detail.page.uid) + 1;
-        this.onChange([{pageNum: pageNum, blocks: e.detail.blocks}]);
-    }
-
-    private onChange(pagesChanged: PageData[]){
-        let snapshot;
-        // Check if we should handle all pages
-        if (this.config.saveOnChange){
-            snapshot = this.save();
-        }
-        else{
-            // TODO: handle page deletion
-            const pageSnapshots = {};
-            for (let pageChanged of pagesChanged){
-                pageSnapshots[pageChanged.pageNum] = this.buildSnapshot(pageChanged.pageNum, pageChanged.delta);
-            }
-            snapshot = {pages: pageSnapshots};
-        }
-
-        if (this.config.onChange != undefined) {
-            this.config.onChange(snapshot);
-        }
-    }
 
     /**
      * Return the word count of either a specific page, or the entire editor
