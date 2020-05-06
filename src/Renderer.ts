@@ -1,5 +1,6 @@
 import {createElement} from "./Util";
 import Op from "quill-delta/dist/Op";
+import DeskConfig from "../types/DeskConfig";
 
 type attributeRenderer = (attrValue) => HTMLElement;
 type attributeParser = (elem: HTMLElement) => Object;
@@ -122,4 +123,44 @@ class Renderer {
     private nodes: RenderNode[];
 }
 
-export default Renderer;
+class Parser {
+    constructor(target: HTMLElement, config: DeskConfig) {
+        this.target = target;
+        this.config = config;
+    }
+
+    /**
+     * Find the parents of the target that are relevant
+     */
+    private findFormattingParents(elem?: HTMLElement){
+        // Start from this.target
+        if (elem == undefined) {
+            elem = this.target;
+        }
+        if (elem.tagName in parseMap) {
+            this.formattingParents.push(elem);
+        }
+        // Stop when the wrapper is hit or the parent element is null
+        const parent = elem.parentElement;
+        if (parent && !parent.classList.contains(this.config.pageWrapperClass)){
+            this.findFormattingParents(elem.parentElement);
+        }
+    }
+
+    public parse(): Object {
+        this.findFormattingParents();
+        let attributes = {};
+        // Now that the different elements that will contribute to the objects attributes have been found
+        for (let parent of this.formattingParents) {
+            const parsed = parseMap[parent.tagName](parent);
+            Object.assign(attributes, parsed);
+        }
+        return attributes;
+    }
+
+    private formattingParents: HTMLElement[];
+    private config: DeskConfig;
+    private target: HTMLElement;
+}
+
+export { Renderer, Parser };

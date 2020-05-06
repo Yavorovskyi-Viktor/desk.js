@@ -289,23 +289,6 @@ export default class Engine {
         }
     }
 
-    public findBlock(e: HTMLElement){
-        // A block should be a direct child of the content wrapper
-        if (e.classList != undefined && e.classList.contains(this.config.blockClass)) {
-            return e;
-        }
-        else if (e.classList != undefined && e.classList.contains(this.config.pageWrapperClass) || (e.id == this.config.holder)){
-            // If we've hit the wrapper or the holder, this isn't a block level element
-            return false;
-        }
-        else if (e.parentElement == undefined) {
-            // If the block or its parent has been recently deleted, don't find a parent
-            return false;
-        }
-        else {
-            return this.findBlock(e.parentElement);
-        }
-    }
 
 
     private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
@@ -457,14 +440,16 @@ export default class Engine {
             if (!target.parentNode) {
                 continue;
             }
-            const blockParent = this.findBlock(target);
-            if (blockParent){
-                // The same is true for the blockParent as it is for the target, so check that it wasn't
-                // removed by clean()
-                const parentIdx = children.indexOf(blockParent);
-                if (parentIdx != -1) {
-                    foundBlocks.add(parentIdx);
-                }
+            switch (mutation.type) {
+                case "childList":
+                    console.log("Child list mutation", mutation);
+                    break;
+                case "characterData":
+                    console.log("Character data mutation", mutation);
+                    break;
+                case "attributes":
+                    console.log("Attribute mutation", mutation);
+                    break;
             }
         }
         if (foundBlocks.size != 0){
@@ -473,39 +458,8 @@ export default class Engine {
     }
 
 
-    /**
-     * (This function is a modified version of the one used for this same purpose by the excellent project editor.js
-     * in caret.ts, https://github.com/codex-team/editor.js/blob/master/src/components/modules/caret.ts). Thank you
-     * editor.js! This saved me a lot of pain
-     *
-     * Creates Document Range and sets caret to the element with offset
-     *
-     * @param {HTMLElement} element - target node.
-     * @param {Number} offset - offset
-     */
-    public static set(element: HTMLElement, offset: number = 0): void {
-        const range = document.createRange(),
-            selection = window.getSelection();
-
-        range.setStart(element, offset);
-        range.setEnd(element, offset);
-
-        selection.removeAllRanges();
-        selection.addRange(range);
-
-        /** If new cursor position is not visible, scroll to it */
-        const {top, bottom} = element.nodeType === Node.ELEMENT_NODE
-            ? element.getBoundingClientRect()
-            : range.getBoundingClientRect();
-        const {innerHeight} = window;
-
-        if (top < 0) { window.scrollBy(0, top); }
-        if (bottom > innerHeight) { window.scrollBy(0, bottom - innerHeight); }
-    }
-
     private static incompatibleBrowser(p: Page){
         console.error("This browser is not compatible with the desk editor. Please update to a newer browser");
-
     }
 
     private pendingBlockChanges: { [uid: string]: Change };

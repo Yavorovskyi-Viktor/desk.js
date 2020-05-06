@@ -6,7 +6,7 @@ import Engine from "./Engine";
 
 // External imports
 import Delta from 'quill-delta';
-import Renderer from "./Renderer";
+import { Renderer } from "./Renderer";
 
 // The class name for a page in the DOM
 const pageClass = "desk-page";

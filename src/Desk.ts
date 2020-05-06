@@ -56,15 +56,8 @@ export default class Desk{
     private deletePage(page: Page) {
         const pageIdx = this.pages.findIndex((p: Page) => p.uid === page.uid);
         console.log(`Deleting page ${pageIdx+1}`);
-        if (pageIdx === 0){
-            // Don't delete the only page in the document
-            if (page.contentWrapper.children.length === 0){
-                // If this was caused by deletion of the last block on the page, create a new one
-                page.newBlock();
-            }
-        }
-        else {
-            // Remove the page internally
+        if (pageIdx !== 0){
+            // If the page isn't the last page in the document, remove it internally
             this.pages.splice(pageIdx, 1);
             // Remove the page from the DOM
             this.editorHolder.removeChild(page.pageHolder);
@@ -110,9 +103,6 @@ export default class Desk{
                 }
             }
         }
-        // Set the cursor on the current onPage
-        const currentBlock = this.currentPage.currentBlock;
-        Engine.set(currentBlock);
     }
 
 
@@ -164,9 +154,7 @@ export default class Desk{
      *
      * @param page The page to build a snapshot of. Either a page number >= 1, a string page UID, or a page object
      */
-    private buildSnapshot(page: number | string | Page):
-        PageData {
-
+    private buildSnapshot(page: number | string | Page): PageData {
         let pageObj;
         if (typeof(page) == "number"){
             if (this.validatePageNumber(page)){
@@ -190,7 +178,6 @@ export default class Desk{
             console.error(`Unrecognized page type ${typeof(page)}`, page);
             return;
         }
-        // Clean the page before serializing any of the blocks
         pageObj.clean();
         // Get the delta from the page
         const snapshot: PageData = {uid: pageObj.uid, delta: pageObj.delta};

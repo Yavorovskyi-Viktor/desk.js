@@ -1,5 +1,4 @@
 import DeskConfig from "../types/DeskConfig";
-import {defaultShortcuts} from "./Engine";
 import {uuid} from "./Util";
 import {Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import {Action} from "../types/EditorAction";
