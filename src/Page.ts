@@ -25,6 +25,7 @@ class Page {
     constructor(config: DeskConfig, data?: PageData){
         this.delta = new Delta();
         this.config = config;
+        this.cursor = 0;
         // If the page wasn't passed a UID, generate a v4 UUID
         if (data == undefined){
             this.uid = config.genUID();
@@ -123,14 +124,15 @@ class Page {
         return this.pageHolder;
     }
 
-
     public focus(){
         this.contentWrapper.focus();
     }
 
     private onPageClick(e){
+        console.log("Got click", e);
         this.contentWrapper.focus();
     }
+
 
     /**
      * Check the height of the wrapper and the main page, and see if the content needs to break into a new page
@@ -186,6 +188,7 @@ class Page {
     public uid: string;
     public shouldOverflow: boolean;
     public wordCount: number;
+    public cursor: number;
     private config: DeskConfig;
 }
 

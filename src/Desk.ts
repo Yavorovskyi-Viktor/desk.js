@@ -11,6 +11,10 @@ import { defaultConfig } from './Defaults';
 // External imports
 import Delta from "quill-delta";
 
+interface CursorPosition {
+    start: number;
+    end?: number;
+}
 
 export default class Desk{
     constructor(config?: DeskConfig){
@@ -22,7 +26,6 @@ export default class Desk{
             // set in Defaults.ts
             config = Object.assign(defaultConfig, config);
         }
-
         this.config = config;
 
         // Generate a session key if one wasn't provided
@@ -38,13 +41,13 @@ export default class Desk{
 
         // Instantiate the provided pages
         for (const page of config.pages){
-            this.pages.push(new Page(this.config, page));
+            this.pushPage(new Page(this.config, page));
             this.onPage = this.config.onPage;
         }
 
         // If there are no current pages, create the first page
         if (this.pages.length == 0){
-            this.pages.push(new Page(this.config));
+            this.pushPage(new Page(this.config));
             this.onPage = 1;
         }
 
@@ -61,6 +64,7 @@ export default class Desk{
         if (pageIdx !== 0){
             // If the page isn't the last page in the document, remove it internally
             this.pages.splice(pageIdx, 1);
+            delete this.pageIds[page.domID];
             // Remove the page from the DOM
             this.editorHolder.removeChild(page.pageHolder);
         }
@@ -96,6 +100,50 @@ export default class Desk{
         }
     }
 
+    private findPage(element: HTMLElement): Page | null {
+        if (element.id in this.pageIds) {
+            return this.pageIds[element.id];
+        }
+        else {
+            const parent = element.parentElement;
+            if (parent && parent.id != this.config.holder){
+                return this.findPage(parent);
+            }
+            else {
+                return null;
+            }
+        }
+    }
+
+    private updateCursorPosition() {
+        let selection = window.getSelection();
+        // Is the cursor anywhere?
+        if (selection.type) {
+            // If so, figure out what page it's on
+            let target = selection.anchorNode || selection.focusNode;
+            if (target) {
+                let relevantPage = this.findPage(target as HTMLElement);
+                if (relevantPage) {
+                    // If a page has been found, store the page ID
+                    this.cursorPage = relevantPage.domID;
+                    // Next figure out where the cursor actually is on the page, by getting the text content of the page
+                    relevantPage.getText();
+                    
+                }
+                else {
+                    console.log("Cursor not on page");
+                }
+            }
+            else {
+                console.error("Couldn't get selection target", selection);
+            }
+        }
+    }
+
+    private pushPage(p: Page) {
+        this.pages.push(p);
+        this.pageIds[p.domID] = p;
+    }
 
     /**
      * Save the current state of the editor. If num is not specified, save all pages
@@ -203,7 +251,7 @@ export default class Desk{
         else {
             if (this.pages.length == pageIdx){
                 // Insert a page directly after the current page
-                this.pages.push(page);
+                this.pushPage(page);
             }
             else {
                 this.pages.splice(pageIdx, 0, page);
@@ -285,6 +333,9 @@ export default class Desk{
     public sessionKey: string;
     public onPage: number;
     public pages: Page[];
+    private pageIds: { [id: string]: Page };
+    private cursorPage: string;
+    private cursorOffset: CursorPosition;
     private engine: Engine;
     private editorHolder: HTMLElement;
     private config: DeskConfig;

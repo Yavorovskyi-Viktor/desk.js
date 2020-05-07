@@ -5,7 +5,7 @@ import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import { createElement } from './Util';
 import classifyInput, {InputTypeGroup} from "./InputClassifier";
-
+import Delta from "quill-delta/dist/Delta";
 
 class Change {
     constructor(page: Page, blocks: Set<number>){
@@ -233,22 +233,48 @@ export default class Engine {
         }
     }
 
+    /**
+     * Figure out the offset of a cursor
+     *
+     * @param p the page that the cursor is on
+     */
+    public updateCursorPosition(p: Page, ): CursorPosition {
+        let selection = window.getSelection();
+        // Is the cursor anywhere?
+        if (selection.type) {
+            // If so, get the content of the page that it's on
+
+            // If so, is it collapsed, or a selection?
+            if (selection.type == "Caret"){
+                // If it's collapsed,
+            }
+            else if (selection.type == "Range") {
+
+            }
+            else {
+                console.error(`Unknown selection type ${selection.type}`);
+                return;
+            }
+            //
+        }
+    }
+
     public onInput(i: InputEvent, p: Page) {
-        console.log("Input", i);
+        console.log(i);
+        console.log("Input of type", i.inputType);
+        let inputDelta = new Delta();
         // Handled input cases, based on https://rawgit.com/w3c/input-events/v1/index.html#interface-InputEvent-Attributes
         let inputType: InputTypeGroup = classifyInput(i);
         switch (inputType){
             case InputTypeGroup.Insert:
                 // A character or element was definitely inserted into the document
-                console.log("Insert input");
+                if (i.data) {
+
+                }
                 break;
             case InputTypeGroup.Delete:
                 // A character or element was definitely deleted from the document
                 console.log("Delete input");
-                break;
-            case InputTypeGroup.DeleteSelection:
-                // The current selection was definitely deleted from the document
-                console.log("Selection delete input");
                 break;
             case InputTypeGroup.Replace:
                 // The current selection was definitely replaced in the document
@@ -263,6 +289,8 @@ export default class Engine {
                 console.log("Unknown input");
                 break;
         }
+        p.delta.compose(inputDelta);
+
     }
 
     /**
@@ -318,7 +346,6 @@ export default class Engine {
             }
         }
     }
-
 
     private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
         const nextPageItems: any[] = [];
@@ -420,7 +447,6 @@ export default class Engine {
             return false;
         }
     }
-
 
     private static incompatibleBrowser(p: Page){
         console.error("This browser is not compatible with the desk editor. Please update to a newer browser");

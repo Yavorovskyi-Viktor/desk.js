@@ -1,7 +1,6 @@
 export enum InputTypeGroup {
     Insert,
     Delete,
-    DeleteSelection,
     Replace,
     Format,
     Unknown,
@@ -32,16 +31,16 @@ const typeGroupMappings: InputTypeMapping = {
     ],
     [InputTypeGroup.Delete]: [
         "deleteWordBackward",
+        "deleteContentBackward",
+        "deleteByCut",
+        "deleteContent",
+        "deleteContentForward",
         "deleteWordForward",
         "deleteSoftLineBackward",
         "deleteSoftLineForward",
         "deleteHardLineBackward",
         "deleteHardLineForward",
         "deleteByDrag",
-    ],
-    [InputTypeGroup.DeleteSelection]: [
-        "deleteByCut",
-        "deleteContent"
     ],
     [InputTypeGroup.Format]: [
         "formatBold",
