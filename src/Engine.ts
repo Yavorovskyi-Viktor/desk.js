@@ -1,12 +1,10 @@
 // Internal imports
 import EditorAction, {Action} from "../types/EditorAction";
-import {KeyboardShortcut, Shortcut, SpecialKey} from "../types/KeyboardShortcut";
+import {Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import { createElement } from './Util';
-import DeskSnapshot from "../types/DeskSnapshot";
-import Delta from 'quill-delta';
-import AttributeMap from "quill-delta/dist/AttributeMap";
+import classifyInput, {InputTypeGroup} from "./InputClassifier";
 
 
 class Change {
@@ -238,7 +236,33 @@ export default class Engine {
     public onInput(i: InputEvent, p: Page) {
         console.log("Input", i);
         // Handled input cases, based on https://rawgit.com/w3c/input-events/v1/index.html#interface-InputEvent-Attributes
-
+        let inputType: InputTypeGroup = classifyInput(i);
+        switch (inputType){
+            case InputTypeGroup.Insert:
+                // A character or element was definitely inserted into the document
+                console.log("Insert input");
+                break;
+            case InputTypeGroup.Delete:
+                // A character or element was definitely deleted from the document
+                console.log("Delete input");
+                break;
+            case InputTypeGroup.DeleteSelection:
+                // The current selection was definitely deleted from the document
+                console.log("Selection delete input");
+                break;
+            case InputTypeGroup.Replace:
+                // The current selection was definitely replaced in the document
+                console.log("Selection replace input");
+                break;
+            case InputTypeGroup.Format:
+                // The format of something in the document definitely changed
+                console.log("Format input");
+                break;
+            case InputTypeGroup.Unknown:
+                // We don't know what happened. Any of the above are still possible, but it should be figured out
+                console.log("Unknown input");
+                break;
+        }
     }
 
     /**

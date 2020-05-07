@@ -1,4 +1,4 @@
-enum InputTypeGroup {
+export enum InputTypeGroup {
     Insert,
     Delete,
     DeleteSelection,
