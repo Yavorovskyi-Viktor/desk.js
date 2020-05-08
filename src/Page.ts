@@ -24,11 +24,11 @@ class Page {
         this.config = config;
         // If the page wasn't passed a UID, generate a v4 UUID
         if (data == undefined){
-            this.uid = config.genUID();
+            this.id = config.genUID();
             this.initialBlocks = [];
         }
         else{
-            this.uid = data.uid || config.genUID();
+            this.id = data.id || config.genUID();
             this.initialBlocks = data.blocks || {};
         }
         this.shouldOverflow = false;
@@ -48,11 +48,11 @@ class Page {
     }
 
     public get domID(): string{
-        return `desk-page-${this.uid}`;
+        return `desk-page-${this.id}`;
     }
 
     public get wrapperID(): string{
-        return `desk-wrapper-${this.uid}`;
+        return `desk-wrapper-${this.id}`;
     }
 
     /**
@@ -316,7 +316,7 @@ class Page {
             return this.contentWrapper.children[this.currentBlockIdx] as HTMLElement;
         }
         else{
-            console.error(`Error: content wrapper for page ${this.uid} has no child nodes. This isn't supposed to happen`);
+            console.error(`Error: content wrapper for page ${this.id} has no child nodes. This isn't supposed to happen`);
             return undefined;
         }
     }
@@ -348,7 +348,7 @@ class Page {
     public pageHolder: HTMLElement;
     public contentWrapper: HTMLElement;
     public currentBlockIdx: number;
-    public uid: string;
+    public id: string;
     public shouldOverflow: boolean;
     public wordCount: number;
     private config: DeskConfig;

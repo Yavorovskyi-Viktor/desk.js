@@ -45,7 +45,7 @@ export default class Desk{
     }
 
     private deletePage(page: Page) {
-        const pageIdx = this.pages.findIndex((p: Page) => p.uid === page.uid);
+        const pageIdx = this.pages.findIndex((p: Page) => p.id === page.id);
         console.log(`Deleting page ${pageIdx+1}`);
         if (pageIdx === 0){
             // Don't delete the only page in the document
@@ -181,9 +181,9 @@ export default class Desk{
             }
         }
         else if (typeof(page) == "string"){
-            pageObj = this.pages.find((value: Page) => value.uid === page);
+            pageObj = this.pages.find((value: Page) => value.id === page);
             if (pageObj == undefined){
-                console.error(`Couldn't find page with UID ${page}`);
+                console.error(`Couldn't find page with ID ${page}`);
                 return;
             }
         }
@@ -216,14 +216,14 @@ export default class Desk{
                 }
             }
         }
-        const snapshot: PageData = {uid: pageObj.uid, blocks: blocks};
+        const snapshot: PageData = {id: pageObj.id, blocks: blocks};
         // Return the resulting snapshot
         return snapshot;
     }
 
 
     private breakPage(page: Page, nextPageContent){
-        const pageIdx: number = this.pages.findIndex((p: Page) => p.uid === page.uid);
+        const pageIdx: number = this.pages.findIndex((p: Page) => p.id === page.id);
         const pageNum = pageIdx + 1;
         const newPage = new Page(this.config, { blocks: nextPageContent });
         this.onPage = pageNum + 1;
@@ -262,7 +262,7 @@ export default class Desk{
     }
 
     public findPageIdx(pageId: string): number | null {
-        const foundIndex = this.pages.findIndex((p: Page) => p.uid === pageId);
+        const foundIndex = this.pages.findIndex((p: Page) => p.id === pageId);
         if (foundIndex >= 0){
             return foundIndex;
         }
@@ -325,7 +325,7 @@ export default class Desk{
 
 
     private unwrapChange(e: CustomEvent){
-        const pageNum = this.pages.findIndex((p: Page) => p.uid === e.detail.page.uid) + 1;
+        const pageNum = this.pages.findIndex((p: Page) => p.id === e.detail.page.id) + 1;
         this.onChange([{pageNum: pageNum, blocks: e.detail.blocks}]);
     }
 

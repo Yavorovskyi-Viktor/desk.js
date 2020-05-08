@@ -413,13 +413,13 @@ export default class Engine {
         if (this.config.debounceChanges){
             // Append pending block changes and debounce the event
             const pendingKeys = Object.keys(this.pendingBlockChanges);
-            if (pendingKeys.includes(ch.page.uid)){
+            if (pendingKeys.includes(ch.page.id)){
                 for (let block of ch.blocks) {
-                    this.pendingBlockChanges[ch.page.uid].blocks.add(block);
+                    this.pendingBlockChanges[ch.page.id].blocks.add(block);
                 }
             }
             else {
-                this.pendingBlockChanges[ch.page.uid] = ch;
+                this.pendingBlockChanges[ch.page.id] = ch;
             }
             // Do the debounce
             clearTimeout(this.debounceTimeout);
