@@ -1,86 +1,11 @@
 // Internal imports
 import EditorAction, {Action} from "../types/EditorAction";
-import {KeyboardShortcut, Shortcut, SpecialKey} from "../types/KeyboardShortcut";
+import {Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import { createElement } from './Util';
-import DeskSnapshot from "../types/DeskSnapshot";
-import BlockData from "../types/BlockData";
-
-const defaultShortcuts: Shortcut[] = [
-    {
-        name: "Bold",
-        action: Action.makeBold,
-        label: "CTRL + B",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyB"
-        }
-    },
-    {
-        name: "Italic",
-        action: Action.makeItalic,
-        label: "CTRL + I",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard:  "KeyI"
-        }
-    },
-    {
-        name: "Underline",
-        action: Action.makeUnderline,
-        label: "CTRL + U",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyU"
-        }
-    },
-    {
-        name: "Strikethrough",
-        action: Action.makeStrikethrough,
-        label: "CTRL + SHIFT + 5",
-        shortcut: {
-            special: [SpecialKey.controlMeta, SpecialKey.shift],
-            standard: "Digit5"
-        }
-    },
-    {
-      name: "Indent",
-      action: Action.indent,
-      label: "TAB",
-      shortcut: {
-          special: [],
-          standard: "Tab"
-      }
-    },
-    {
-        name: "Unindent",
-        action: Action.unindent,
-        label: "SHIFT + TAB",
-        shortcut: {
-            special: [SpecialKey.shift],
-            standard: "Tab"
-        }
-    },
-    {
-        name: "Undo",
-        action: Action.undo,
-        label: "CTRL + Z",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyZ"
-        }
-    },
-    {
-        name: "Redo",
-        action: Action.redo,
-        label: "CTRL + SHIFT + Z",
-        shortcut: {
-            special: [SpecialKey.controlMeta, SpecialKey.shift],
-            standard: "KeyZ"
-        }
-    },
-];
+import classifyInput, {InputTypeGroup} from "./InputClassifier";
+import Delta from "quill-delta/dist/Delta";
 
 class Change {
     constructor(page: Page, blocks: Set<number>){
@@ -257,8 +182,6 @@ export default class Engine {
                 break;
             case (Action.doPrint):
                 break;
-            case (Action.save):
-                break;
         }
     }
 
@@ -308,6 +231,66 @@ export default class Engine {
                 e.preventDefault();
             }
         }
+    }
+
+    /**
+     * Figure out the offset of a cursor
+     *
+     * @param p the page that the cursor is on
+     */
+    public updateCursorPosition(p: Page, ): CursorPosition {
+        let selection = window.getSelection();
+        // Is the cursor anywhere?
+        if (selection.type) {
+            // If so, get the content of the page that it's on
+
+            // If so, is it collapsed, or a selection?
+            if (selection.type == "Caret"){
+                // If it's collapsed,
+            }
+            else if (selection.type == "Range") {
+
+            }
+            else {
+                console.error(`Unknown selection type ${selection.type}`);
+                return;
+            }
+            //
+        }
+    }
+
+    public onInput(i: InputEvent, p: Page) {
+        console.log(i);
+        console.log("Input of type", i.inputType);
+        let inputDelta = new Delta();
+        // Handled input cases, based on https://rawgit.com/w3c/input-events/v1/index.html#interface-InputEvent-Attributes
+        let inputType: InputTypeGroup = classifyInput(i);
+        switch (inputType){
+            case InputTypeGroup.Insert:
+                // A character or element was definitely inserted into the document
+                if (i.data) {
+
+                }
+                break;
+            case InputTypeGroup.Delete:
+                // A character or element was definitely deleted from the document
+                console.log("Delete input");
+                break;
+            case InputTypeGroup.Replace:
+                // The current selection was definitely replaced in the document
+                console.log("Selection replace input");
+                break;
+            case InputTypeGroup.Format:
+                // The format of something in the document definitely changed
+                console.log("Format input");
+                break;
+            case InputTypeGroup.Unknown:
+                // We don't know what happened. Any of the above are still possible, but it should be figured out
+                console.log("Unknown input");
+                break;
+        }
+        p.delta.compose(inputDelta);
+
     }
 
     /**
@@ -364,26 +347,8 @@ export default class Engine {
         }
     }
 
-    public findBlock(e: HTMLElement){
-        // A block should be a direct child of the content wrapper
-        if (e.classList != undefined && e.classList.contains(this.config.blockClass)) {
-            return e;
-        }
-        else if (e.classList != undefined && e.classList.contains(this.config.pageWrapperClass) || (e.id == this.config.holder)){
-            // If we've hit the wrapper or the holder, this isn't a block level element
-            return false;
-        }
-        else if (e.parentElement == undefined) {
-            // If the block or its parent has been recently deleted, don't find a parent
-            return false;
-        }
-        else {
-            return this.findBlock(e.parentElement);
-        }
-    }
-
     private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
-        const nextPageItems: BlockData[] = [];
+        const nextPageItems: any[] = [];
         const pageBottom  = p.pageBottom;
         console.log(`Overflowing, page bottom is ${pageBottom} nodes:`);
         for (let childIdx in p.contentWrapper.children) {
@@ -410,7 +375,7 @@ export default class Engine {
                                     // Figure out where the text broke
                                     const oldLength = mutation.oldValue.length;
                                     let splitIndex = oldLength - 1;
-                                    // Keep going back until we hit the beginning of the page and
+                                    // Keep going back until we hit the beginning of the page
                                     while (splitIndex > 0 && mutation.target.textContent[splitIndex] != " "){
                                         splitIndex--;
                                     }
@@ -483,103 +448,8 @@ export default class Engine {
         }
     }
 
-    private debounceChange(ch: Change){
-        // Determine whether debounce is configured
-        if (this.config.debounceChanges){
-            // Append pending block changes and debounce the event
-            const pendingKeys = Object.keys(this.pendingBlockChanges);
-            if (pendingKeys.includes(ch.page.uid)){
-                for (let block of ch.blocks) {
-                    this.pendingBlockChanges[ch.page.uid].blocks.add(block);
-                }
-            }
-            else {
-                this.pendingBlockChanges[ch.page.uid] = ch;
-            }
-            // Do the debounce
-            clearTimeout(this.debounceTimeout);
-            const after = () => {
-                // Build a snapshot for each page that has pending changes
-                for (let page of Object.keys(this.pendingBlockChanges)){
-                    this.pendingBlockChanges[page].fireChange();
-                    delete this.pendingBlockChanges[page];
-                }
-            };
-            this.debounceTimeout = setTimeout(after, this.config.debounceChanges);
-        }
-        else {
-            // If it's not, fire the change immediately
-            ch.fireChange();
-        }
-    }
-
-    public handleMutation(mutationsList: MutationRecord[], p: Page){
-        // Clean the blocks on the page
-        p.clean();
-        // Determine if the page is overflowing
-        if (p.isOverflowing){
-            this.doOverflowCheck(mutationsList, p);
-            return;
-        }
-        // Dispatch change events
-        const foundBlocks = new Set<number>();
-        const children = Array.from(p.contentWrapper.children);
-        for (let mutation of mutationsList){
-            const target = mutation.target as HTMLElement;
-            // If the target, or the found doesn't have a parent node, it was removed from the DOM by clean(), and shouldn't
-            // be included in the snapshot
-            if (!target.parentNode) {
-                continue;
-            }
-            const blockParent = this.findBlock(target);
-            if (blockParent){
-                // The same is true for the blockParent as it is for the target, so check that it wasn't
-                // removed by clean()
-                const parentIdx = children.indexOf(blockParent);
-                if (parentIdx != -1) {
-                    foundBlocks.add(parentIdx);
-                }
-            }
-        }
-        if (foundBlocks.size != 0){
-            this.debounceChange(new Change(p, foundBlocks));
-        }
-    }
-
-
-    /**
-     * (This function is a modified version of the one used for this same purpose by the excellent project editor.js
-     * in caret.ts, https://github.com/codex-team/editor.js/blob/master/src/components/modules/caret.ts). Thank you
-     * editor.js! This saved me a lot of pain
-     *
-     * Creates Document Range and sets caret to the element with offset
-     *
-     * @param {HTMLElement} element - target node.
-     * @param {Number} offset - offset
-     */
-    public static set(element: HTMLElement, offset: number = 0): void {
-        const range = document.createRange(),
-            selection = window.getSelection();
-
-        range.setStart(element, offset);
-        range.setEnd(element, offset);
-
-        selection.removeAllRanges();
-        selection.addRange(range);
-
-        /** If new cursor position is not visible, scroll to it */
-        const {top, bottom} = element.nodeType === Node.ELEMENT_NODE
-            ? element.getBoundingClientRect()
-            : range.getBoundingClientRect();
-        const {innerHeight} = window;
-
-        if (top < 0) { window.scrollBy(0, top); }
-        if (bottom > innerHeight) { window.scrollBy(0, bottom - innerHeight); }
-    }
-
     private static incompatibleBrowser(p: Page){
         console.error("This browser is not compatible with the desk editor. Please update to a newer browser");
-
     }
 
     private pendingBlockChanges: { [uid: string]: Change };
@@ -588,8 +458,3 @@ export default class Engine {
     public shortcuts: Shortcut[];
     private config: DeskConfig;
 }
-
-
-
-export { defaultShortcuts };
-
