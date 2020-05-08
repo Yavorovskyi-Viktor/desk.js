@@ -4,6 +4,7 @@
     "target": "es2017",
     "declaration": false,
     "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "lib": ["dom", "es2017", "es2018", "es6"]
   }
 }

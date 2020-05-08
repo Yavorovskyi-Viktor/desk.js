@@ -103,4 +103,5 @@ const defaultConfig: DeskConfig = {
     sessionKey: false
 };
 
-export { defaultConfig, defaultShortcuts }
+
+export { defaultConfig, defaultShortcuts };

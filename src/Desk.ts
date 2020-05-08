@@ -4,15 +4,21 @@ import PageData from "../types/PageData";
 import Page from './Page';
 import Engine  from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
-import BlockData from "../types/BlockData";
-import PageChange from "../types/PageChange";
 import EditorAction from "../types/EditorAction";
 import { uuid } from './Util';
 import { defaultConfig } from "./Defaults";
 
 export default class Desk{
-    constructor(config: DeskConfig){
-        this.config = Object.assign(defaultConfig, config);
+    constructor(config?: DeskConfig){
+        if (config == undefined){
+            config = defaultConfig
+        }
+        else{
+            // Set configuration defaults. The default values for these are detailed in DeskConfig.ts, and
+            // set in Defaults.ts
+            config = Object.assign(defaultConfig, config);
+        }
+        this.config = config;
 
         // Generate a session key if one wasn't provided
         this.sessionKey = config.sessionKey || uuid();
@@ -27,15 +33,16 @@ export default class Desk{
 
         // Instantiate the provided pages
         for (const page of config.pages){
-            this.pages.push(new Page(this.config, page));
+            this.pushPage(new Page(this.config, page));
             this.onPage = this.config.onPage;
         }
 
         // If there are no current pages, create the first page
         if (this.pages.length == 0){
-            this.pages.push(new Page(this.config));
+            this.pushPage(new Page(this.config));
             this.onPage = 1;
         }
+
         //Instantiate the text formatting engine
         this.engine = new Engine(this.config);
 
@@ -46,16 +53,10 @@ export default class Desk{
     private deletePage(page: Page) {
         const pageIdx = this.pages.findIndex((p: Page) => p.uid === page.uid);
         console.log(`Deleting page ${pageIdx+1}`);
-        if (pageIdx === 0){
-            // Don't delete the only page in the document
-            if (page.contentWrapper.children.length === 0){
-                // If this was caused by deletion of the last block on the page, create a new one
-                page.newBlock();
-            }
-        }
-        else {
-            // Remove the page internally
+        if (pageIdx !== 0){
+            // If the page isn't the last page in the document, remove it internally
             this.pages.splice(pageIdx, 1);
+            delete this.pageIds[page.domID];
             // Remove the page from the DOM
             this.editorHolder.removeChild(page.pageHolder);
         }
@@ -63,7 +64,6 @@ export default class Desk{
 
     private render(){
         // Debounce change events so they're not overwhelming a listener
-        const unwrapChange = this.unwrapChange.bind(this);
         for (let pageIdx in this.pages){
             let pageNum = (+pageIdx)+1;
             const page = this.pages[pageIdx];
@@ -73,6 +73,8 @@ export default class Desk{
                 // Pass all keydown and input events on the page to the text formatting engine
                 page.contentWrapper.addEventListener('keydown', (e: KeyboardEvent) =>
                                                                                 this.engine.onKeydown(e, page));
+                page.contentWrapper.addEventListener('input', (i: InputEvent) =>
+                                                                                this.engine.onInput(i, page));
                 // Pass overflow events back to the page manager so we can break the page
                 page.contentWrapper.addEventListener('overflow', (e: CustomEvent) =>
                                                                         this.breakPage(page, e.detail));
@@ -81,18 +83,6 @@ export default class Desk{
                 // Pass paste events to the text formatting engine
                 page.contentWrapper.addEventListener('paste', (e: ClipboardEvent) =>
                                                                                     this.engine.onPaste(e, page));
-                // Listen to change events in onchange
-                page.contentWrapper.addEventListener('change', unwrapChange);
-                // Listen to mutations and pass them as well to the formatting engine
-                const observer = new MutationObserver((mutations) =>
-                    this.engine.handleMutation(mutations, page));
-                observer.observe(page.contentWrapper, {
-                    characterData: true,
-                    characterDataOldValue: true,
-                    childList: true,
-                    subtree: true
-                });
-
                 this.editorHolder.appendChild(renderedPage);
                 // If this is the page that the user is currently on, and it hasn't been rendered yet, focus on it
                 if (pageNum == this.onPage){
@@ -100,11 +90,52 @@ export default class Desk{
                 }
             }
         }
-        // Set the cursor on the current onPage
-        const currentBlock = this.currentPage.currentBlock;
-        Engine.set(currentBlock);
     }
 
+    private findPage(element: HTMLElement): Page | null {
+        if (element.id in this.pageIds) {
+            return this.pageIds[element.id];
+        }
+        else {
+            const parent = element.parentElement;
+            if (parent && parent.id != this.config.holder){
+                return this.findPage(parent);
+            }
+            else {
+                return null;
+            }
+        }
+    }
+
+    private updateCursorPosition() {
+        let selection = window.getSelection();
+        // Is the cursor anywhere?
+        if (selection.type) {
+            // If so, figure out what page it's on
+            let target = selection.anchorNode || selection.focusNode;
+            if (target) {
+                let relevantPage = this.findPage(target as HTMLElement);
+                if (relevantPage) {
+                    // If a page has been found, store the page ID
+                    this.cursorPage = relevantPage.domID;
+                    // Next figure out where the cursor actually is on the page, by getting the text content of the page
+                    relevantPage.getText();
+                    
+                }
+                else {
+                    console.log("Cursor not on page");
+                }
+            }
+            else {
+                console.error("Couldn't get selection target", selection);
+            }
+        }
+    }
+
+    private pushPage(p: Page) {
+        this.pages.push(p);
+        this.pageIds[p.domID] = p;
+    }
 
     /**
      * Save the current state of the editor. If num is not specified, save all pages
@@ -149,27 +180,12 @@ export default class Desk{
         return false;
     }
 
-    private static serializeBlock(blockElem: HTMLElement): BlockData{
-        let blockInner = blockElem.innerHTML;
-        // Remove zero width characters
-        if (blockInner === "&#8203;"){
-            blockInner = "";
-        }
-        return {
-            content: blockInner
-        };
-    }
-
     /**
-     * Build a snapshot of a given page. If blockNumbers or blockUIDs is defined, return just those blocks. From
-     * the page snapshot. Otherwise, return all pages
+     * Build a snapshot of a given page. If page is defined, just return that page. Otherwise, return all pages
      *
      * @param page The page to build a snapshot of. Either a page number >= 1, a string page UID, or a page object
-     * @param blockNumbers: A set of block indexes
      */
-    private buildSnapshot(page: number | string | Page, blockNumbers?: number[]):
-        PageData {
-
+    private buildSnapshot(page: number | string | Page): PageData {
         let pageObj;
         if (typeof(page) == "number"){
             if (this.validatePageNumber(page)){
@@ -193,46 +209,24 @@ export default class Desk{
             console.error(`Unrecognized page type ${typeof(page)}`, page);
             return;
         }
-        // Clean the page before serializing any of the blocks
         pageObj.clean();
-        // Get the blocks from the page
-        const blocks = {};
-        if (blockNumbers != undefined && blockNumbers.length > 0){
-            blockNumbers.forEach(function(i: number){
-               // Since the page has just been cleaned, there's no longer a guarantee that this block
-               // exists, so we should make sure that it does
-               const blockElem = pageObj.getBlock(i);
-               if (blockElem){
-                   blocks[i] = Desk.serializeBlock(blockElem);
-               }
-            });
-        }
-        else{
-            for (let blockG in pageObj.blocks){
-                const i = (+blockG);
-                if (!isNaN(i)){
-                    blocks[i] = Desk.serializeBlock(pageObj.getBlock(i));
-                }
-            }
-        }
-        const snapshot: PageData = {uid: pageObj.uid, blocks: blocks};
+        // Get the delta from the page
+        const snapshot: PageData = {uid: pageObj.uid, delta: pageObj.delta};
         // Return the resulting snapshot
         return snapshot;
     }
 
 
-    private breakPage(page: Page, nextPageContent){
+    private breakPage(page: Page, nextPageContent: Delta){
         const pageIdx: number = this.pages.findIndex((p: Page) => p.uid === page.uid);
         const pageNum = pageIdx + 1;
-        const newPage = new Page(this.config, { blocks: nextPageContent });
+        const newPage = new Page(this.config, { delta: nextPageContent });
         this.onPage = pageNum + 1;
         // Check to see if a page already exists with the page number following pageNum
         if (this.pages.length > pageNum){
             // If it does, push the pending page content onto that page
             const nextPage = this.pages[pageNum];
-            for (let block of nextPageContent){
-                nextPage.insertBlock(0, block);
-            }
+            nextPage.setContents(nextPageContent);
         }
         else {
             // If not, create a new page
@@ -240,8 +234,6 @@ export default class Desk{
         }
         // Focus on the new page
         this.currentPage.focus();
-        // Dispatch a change snapshot that includes the pages that changed
-        this.onChange([{pageNum: pageNum}, {pageNum: pageNum + 1}]);
     }
 
     public insertPageAt(pageIdx: number, page?: Page): boolean {
@@ -251,7 +243,7 @@ export default class Desk{
         else {
             if (this.pages.length == pageIdx){
                 // Insert a page directly after the current page
-                this.pages.push(page);
+                this.pushPage(page);
             }
             else {
                 this.pages.splice(pageIdx, 0, page);
@@ -280,31 +272,6 @@ export default class Desk{
         }
     }
 
-    public setPageContent(pageId: string, blocks: Object){
-        // If the blocks are empty, set a single zero width block
-        if (Object.keys(blocks).length == 0){
-            blocks = {
-                0: {
-                    content: "&#8203;"
-                }
-            }
-        }
-        const foundPageIdx = this.findPageIdx(pageId);
-        if (foundPageIdx != null){
-            const pageObj = this.pages[foundPageIdx];
-            // Clear the blocks currently on the page
-            pageObj.contentWrapper.textContent = '';
-            // Insert each block onto the page
-            for (let blockK of Object.keys(blocks)){
-                const block: BlockData = blocks[blockK];
-                pageObj.insertBlock((+blockK), block);
-            }
-        }
-        else {
-            console.error(`Couldn't find page with ID ${pageId}`);
-            return null;
-        }
-    }
 
     public insertNewPageAt(index: number, page: PageData){
         const newPage = new Page(this.config, page);
@@ -322,31 +289,6 @@ export default class Desk{
         this.insertNewPageAt(afterPage+1, page);
     }
 
-
-    private unwrapChange(e: CustomEvent){
-        const pageNum = this.pages.findIndex((p: Page) => p.uid === e.detail.page.uid) + 1;
-        this.onChange([{pageNum: pageNum, blocks: e.detail.blocks}]);
-    }
-
-    private onChange(pagesChanged: PageChange[]){
-        let snapshot;
-        // Check if we should handle all pages
-        if (this.config.saveOnChange){
-            snapshot = this.save();
-        }
-        else{
-            // TODO: handle page deletion
-            const pageSnapshots = {};
-            for (let pageChanged of pagesChanged){
-                pageSnapshots[pageChanged.pageNum] = this.buildSnapshot(pageChanged.pageNum, pageChanged.blocks);
-            }
-            snapshot = {pages: pageSnapshots};
-        }
-
-        if (this.config.onChange != undefined) {
-            this.config.onChange(snapshot);
-        }
-    }
 
     /**
      * Return the word count of either a specific page, or the entire editor
@@ -383,6 +325,9 @@ export default class Desk{
     public sessionKey: string;
     public onPage: number;
     public pages: Page[];
+    private pageIds: { [id: string]: Page };
+    private cursorPage: string;
+    private cursorOffset: CursorPosition;
     private engine: Engine;
     private editorHolder: HTMLElement;
     private config: DeskConfig;
