@@ -4,7 +4,6 @@ import PageData from "../types/PageData";
 import Page from './Page';
 import Engine  from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
-import BlockData from "../types/BlockData";
 import PageChange from "../types/PageChange";
 import EditorAction from "../types/EditorAction";
 import { uuid } from './Util';
@@ -150,15 +149,13 @@ export default class Desk{
         return false;
     }
 
-    private static serializeBlock(blockElem: HTMLElement): BlockData{
+    private static serializeBlock(blockElem: HTMLElement): string {
         let blockInner = blockElem.innerHTML;
         // Remove zero width characters
         if (blockInner === "&#8203;"){
             blockInner = "";
         }
-        return {
-            content: blockInner
-        };
+        return blockInner;
     }
 
     /**
@@ -297,7 +294,7 @@ export default class Desk{
             pageObj.contentWrapper.textContent = '';
             // Insert each block onto the page
             for (let blockK of Object.keys(blocks)){
-                const block: BlockData = blocks[blockK];
+                const block: string = blocks[blockK];
                 pageObj.insertBlock((+blockK), block);
             }
         }

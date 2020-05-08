@@ -4,7 +4,6 @@ import DeskConfig from "../types/DeskConfig";
 import * as Util from './Util';
 // External imports
 import Engine from "./Engine";
-import BlockData from "../types/BlockData";
 
 // The class name for a page in the DOM
 const pageClass = "desk-page";
@@ -119,13 +118,13 @@ class Page {
         return this.pageHolder;
     }
 
-    private renderBlock(block?: BlockData): HTMLElement {
+    private renderBlock(block?: string): HTMLElement {
         // If there are ever any custom block data elements, handle those here
         const elem = Util.createElement('div', {
             "class": this.config.blockClass
         });
         if (block != undefined){
-            elem.innerHTML = block.content;
+            elem.innerHTML = block;
         }
         return elem;
     }
@@ -137,13 +136,13 @@ class Page {
      * @param index The index that the block exists at
      * @param data The data
      */
-    private setBlock(index: number, data?: BlockData){
+    private setBlock(index: number, data?: string){
         let content;
         if (data == undefined){
             content = '';
         }
         else {
-            content = data.content || '';
+            content = data || '';
         }
         this.contentWrapper.children[index].innerHTML = content;
     }
@@ -209,14 +208,14 @@ class Page {
      *
      * @param data the block data to render
      */
-    public newBlock(data?: BlockData){
+    public newBlock(data?: string){
         // If there's no content in the data, insert a zero width character, because otherwise Chrome won't put the
         // cursor into it. This will be removed by the formatting engine as soon as there are characters in the block
         if (data == undefined){
-            data = {content: "&#8203;"};
+            data = "&#8203;";
         }
         else {
-            data.content = data.content || "&#8203;";
+            data = data || "&#8203;";
         }
         this.contentWrapper.appendChild(this.renderBlock(data));
     }
@@ -227,7 +226,7 @@ class Page {
      * @param index The index to insert the block at
      * @param data The block data
      */
-    public insertBlock(index: number, data?: BlockData){
+    public insertBlock(index: number, data?: string){
         this.countWords();
         // Get the current number of children on the page. Note that this is a length, so 1 more than the index
         const numChildren = this.contentWrapper.children.length;
@@ -352,7 +351,7 @@ class Page {
     public shouldOverflow: boolean;
     public wordCount: number;
     private config: DeskConfig;
-    private initialBlocks: { [index: number]: BlockData };
+    private initialBlocks: { [index: number]: string };
 }
 
 export default Page;

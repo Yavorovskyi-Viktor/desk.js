@@ -4,7 +4,6 @@ import {Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import { createElement } from './Util';
-import BlockData from "../types/BlockData";
 import { defaultShortcuts } from "./Defaults";
 
 class Change {
@@ -308,7 +307,7 @@ export default class Engine {
     }
 
     private doOverflowCheck(mutationsList: MutationRecord[], p: Page){
-        const nextPageItems: BlockData[] = [];
+        const nextPageItems: string[] = [];
         const pageBottom  = p.pageBottom;
         console.log(`Overflowing, page bottom is ${pageBottom} nodes:`);
         for (let childIdx in p.contentWrapper.children) {
@@ -318,7 +317,7 @@ export default class Engine {
             if (rects.bottom >= pageBottom){
                 if (rects.top >= pageBottom){
                     let newChild = p.contentWrapper.removeChild(child);
-                    nextPageItems.push({content: newChild.innerHTML});
+                    nextPageItems.push(newChild.innerHTML);
                 }
                 else{
                     const collectedMutationText = [];
@@ -358,7 +357,7 @@ export default class Engine {
                                     collectedMutationText.push(textElem);
                                 } else {
                                     let newChild = document.removeChild(child);
-                                    nextPageItems.push({content: newChild.innerHTML});
+                                    nextPageItems.push(newChild.innerHTML);
                                 }
                             }
                         }
@@ -376,12 +375,12 @@ export default class Engine {
                             }
                         });
                         mutationElement.normalize();
-                        nextPageItems.push({content: mutationElement.innerHTML});
+                        nextPageItems.push(mutationElement.innerHTML);
                     }
                     else {
                         // If we can't get the text mutation, just push the whole block onto the next page
                         let newChild = p.contentWrapper.removeChild(child);
-                        nextPageItems.push({content: newChild.innerHTML});
+                        nextPageItems.push(newChild.innerHTML);
                     }
                 }
             }
