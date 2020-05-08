@@ -42,6 +42,9 @@ export enum Action {
 
     // Print
     doPrint = 'doPrint',
+
+    // Save
+    save = 'save'
 }
 
 interface EditorAction {
