@@ -2,19 +2,11 @@
 import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
-import Engine from "./Engine";
+import Engine  from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
 import EditorAction from "../types/EditorAction";
 import { uuid } from './Util';
-import { defaultConfig } from './Defaults';
-
-// External imports
-import Delta from "quill-delta";
-
-interface CursorPosition {
-    start: number;
-    end?: number;
-}
+import { defaultConfig } from "./Defaults";
 
 export default class Desk{
     constructor(config?: DeskConfig){

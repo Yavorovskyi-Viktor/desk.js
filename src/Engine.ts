@@ -4,8 +4,8 @@ import {Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import { createElement } from './Util';
-import classifyInput, {InputTypeGroup} from "./InputClassifier";
-import Delta from "quill-delta/dist/Delta";
+import { defaultShortcuts } from "./Defaults";
+import BlockData from "../types/BlockData";
 
 class Change {
     constructor(page: Page, blocks: Set<number>){

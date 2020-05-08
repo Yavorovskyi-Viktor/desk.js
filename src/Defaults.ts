@@ -104,5 +104,4 @@ const defaultConfig: DeskConfig = {
 };
 
 
-
 export { defaultConfig, defaultShortcuts };
