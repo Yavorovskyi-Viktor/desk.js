@@ -2,64 +2,17 @@
 import DeskConfig from "../types/DeskConfig";
 import PageData from "../types/PageData";
 import Page from './Page';
-import Engine, { defaultShortcuts } from "./Engine";
+import Engine  from "./Engine";
 import DeskSnapshot from "../types/DeskSnapshot";
 import BlockData from "../types/BlockData";
 import PageChange from "../types/PageChange";
 import EditorAction from "../types/EditorAction";
 import { uuid } from './Util';
-
-const defaultConfig: DeskConfig = {
-    holder: "desk-editor",
-    height: "1056px",
-    width: "815px",
-    pages: [],
-    onPage: 1,
-    onChange: (() => {}),
-    spacing: "20px",
-    margins: {
-        "left": 15,
-        "right": 15,
-        "top": 15,
-        "bottom": 15
-    },
-    baseShortcuts: defaultShortcuts,
-    extraShortcuts: [],
-    blockClass: "desk-block",
-    pageClass: "desk-page",
-    pageWrapperClass: "desk-page-wrapper",
-    saveOnChange: false,
-    genUID: uuid,
-    debounceChanges: 500,
-    sessionKey: false
-};
+import { defaultConfig } from "./Defaults";
 
 export default class Desk{
     constructor(config: DeskConfig){
-        if (config == undefined){
-            config = defaultConfig
-        }
-        else{
-            // Set configuration defaults. The default values for these are detailed in DeskConfig.ts
-            config.holder = config.holder || defaultConfig.holder;
-            config.height = config.height || defaultConfig.height;
-            config.width = config.width || defaultConfig.width;
-            config.pages = config.pages || defaultConfig.pages;
-            config.onPage = config.onPage || defaultConfig.onPage;
-            config.onChange = config.onChange || defaultConfig.onChange;
-            config.margins = config.margins || defaultConfig.margins;
-            config.spacing = config.spacing || defaultConfig.spacing;
-            config.baseShortcuts = config.baseShortcuts || defaultConfig.baseShortcuts;
-            config.extraShortcuts = config.extraShortcuts || defaultConfig.extraShortcuts;
-            config.blockClass = config.blockClass || defaultConfig.blockClass;
-            config.saveOnChange = config.saveOnChange || defaultConfig.saveOnChange;
-            config.genUID = config.genUID || defaultConfig.genUID;
-            config.debounceChanges = config.debounceChanges || defaultConfig.debounceChanges;
-            config.pageClass = config.pageClass || defaultConfig.pageClass;
-            config.pageWrapperClass = config.pageWrapperClass || defaultConfig.pageWrapperClass;
-            config.sessionKey = config.sessionKey || defaultConfig.sessionKey;
-        }
-        this.config = config;
+        this.config = Object.assign(defaultConfig, config);
 
         // Generate a session key if one wasn't provided
         this.sessionKey = config.sessionKey || uuid();

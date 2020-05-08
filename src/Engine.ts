@@ -1,86 +1,11 @@
 // Internal imports
 import EditorAction, {Action} from "../types/EditorAction";
-import {KeyboardShortcut, Shortcut, SpecialKey} from "../types/KeyboardShortcut";
+import {Shortcut, SpecialKey} from "../types/KeyboardShortcut";
 import DeskConfig from "../types/DeskConfig";
 import Page from "./Page";
 import { createElement } from './Util';
-import DeskSnapshot from "../types/DeskSnapshot";
+import { defaultShortcuts } from "./Defaults";
 import BlockData from "../types/BlockData";
-
-const defaultShortcuts: Shortcut[] = [
-    {
-        name: "Bold",
-        action: Action.makeBold,
-        label: "CTRL + B",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyB"
-        }
-    },
-    {
-        name: "Italic",
-        action: Action.makeItalic,
-        label: "CTRL + I",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard:  "KeyI"
-        }
-    },
-    {
-        name: "Underline",
-        action: Action.makeUnderline,
-        label: "CTRL + U",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyU"
-        }
-    },
-    {
-        name: "Strikethrough",
-        action: Action.makeStrikethrough,
-        label: "CTRL + SHIFT + 5",
-        shortcut: {
-            special: [SpecialKey.controlMeta, SpecialKey.shift],
-            standard: "Digit5"
-        }
-    },
-    {
-      name: "Indent",
-      action: Action.indent,
-      label: "TAB",
-      shortcut: {
-          special: [],
-          standard: "Tab"
-      }
-    },
-    {
-        name: "Unindent",
-        action: Action.unindent,
-        label: "SHIFT + TAB",
-        shortcut: {
-            special: [SpecialKey.shift],
-            standard: "Tab"
-        }
-    },
-    {
-        name: "Undo",
-        action: Action.undo,
-        label: "CTRL + Z",
-        shortcut: {
-            special: [SpecialKey.controlMeta],
-            standard: "KeyZ"
-        }
-    },
-    {
-        name: "Redo",
-        action: Action.redo,
-        label: "CTRL + SHIFT + Z",
-        shortcut: {
-            special: [SpecialKey.controlMeta, SpecialKey.shift],
-            standard: "KeyZ"
-        }
-    },
-];
 
 class Change {
     constructor(page: Page, blocks: Set<number>){
