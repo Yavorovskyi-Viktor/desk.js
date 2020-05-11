@@ -11,24 +11,31 @@ import { defaultConfig } from "./Defaults";
 
 
 export default class Desk{
-    constructor(config: DeskConfig){
-        this.config = Object.assign(defaultConfig, config);
+    constructor(config?: DeskConfig){
+        if (config == undefined){
+            this.config = defaultConfig;
+        }
+        else {
+            this.config = Object.assign(defaultConfig, config);
+        }
 
         // Generate a session key if one wasn't provided
-        this.sessionKey = config.sessionKey || uuid();
+        this.sessionKey = this.config.sessionKey || uuid();
 
         // Make sure that the holder element exists on the page
         this.editorHolder = document.getElementById(this.config.holder);
         if (this.editorHolder == null){
-            console.error(`Couldn't find holder: ${config.holder}`)
+            console.error(`Couldn't find holder: ${this.config.holder}`)
         }
 
         this.pages = [];
 
         // Instantiate the provided pages
-        for (const page of config.pages){
-            this.pages.push(new Page(this.config, page));
-            this.onPage = this.config.onPage;
+        if (this.config.pages != undefined) {
+            for (const page of this.config.pages){
+                this.pages.push(new Page(this.config, page));
+                this.onPage = this.config.onPage;
+            }
         }
 
         // If there are no current pages, create the first page
@@ -282,9 +289,7 @@ export default class Desk{
         // If the blocks are empty, set a single zero width block
         if (Object.keys(blocks).length == 0){
             blocks = {
-                0: {
-                    content: "&#8203;"
-                }
+                0: "&#8203;"
             }
         }
         const foundPageIdx = this.findPageIdx(pageId);
